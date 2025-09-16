@@ -1,0 +1,45 @@
+package com.ftn.sbnz.service.controllers;
+
+import com.ftn.sbnz.model.dto.SessionDTO;
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.service.services.TirednessService;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/tiredness-system")
+public class DigitalTirednessController {
+
+    private final TirednessService tirednessService;
+
+    public DigitalTirednessController(TirednessService tirednessService) {
+        this.tirednessService = tirednessService;
+    }
+
+    // sent init sessions in memory
+    @PostMapping("/add")
+    public void addSessions(@RequestBody SessionDTO sessionDTO) {
+        List<Session> allSessions = sessionDTO.getSessions();
+        tirednessService.addSessions(allSessions);
+    }
+
+    // add new event in one session
+    @PostMapping("/event")
+    public List<Recommendation> processEvent(@RequestBody ActivityEvent event) {
+        return tirednessService.processEvent(event);
+    }
+
+    @GetMapping("/recommendations/{sessionId}")
+    public List<Recommendation> getRecommendations(@PathVariable long sessionId) {
+        return tirednessService.getRecommendationsForSession(sessionId);
+    }
+
+
+    @PostMapping("/end-session")
+    public String endSession(){
+        return tirednessService.endSession();
+    }
+}

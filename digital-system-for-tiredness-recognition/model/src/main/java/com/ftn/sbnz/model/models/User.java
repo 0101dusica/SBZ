@@ -1,0 +1,17 @@
+package com.ftn.sbnz.model.models;
+
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.models.enums.DeviceType;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+    private long id;
+    private String firstName;
+    private String lastName;
+    private String email;
+}

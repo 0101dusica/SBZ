@@ -1,0 +1,11 @@
+{
+  "id": 5,
+  "sessionId": 1,
+  "activityType": "ENTERTAINMENT",
+  "deviceType": "PHONE_DEVICE",
+  "startTimestamp": 1694885400000,
+  "endTimestamp": 1694887200000,
+  "activityDuration": 20,
+  "typingSpeed": 0,
+  "errors": 0
+}
