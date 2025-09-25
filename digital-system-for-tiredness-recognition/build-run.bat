@@ -12,6 +12,6 @@ call mvn clean install -B
 if errorlevel 1 exit /b %errorlevel%
 cd ..
 
-echo Starting Spring Boot service...
+echo Starting Spring Boot service...netstat -ano | findstr :8080
 cd service
 mvn spring-boot:run
