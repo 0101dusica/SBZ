@@ -1,0 +1,55 @@
+<div class="dashboard">
+  <!-- User Greeting -->
+  <div class="greeting-section">
+    <div class="image-section text-logo-section">
+        <img src="logo/logo-text.png" alt="Digitalni Zamor Logo" class="logo"/>
+    </div>
+    <div class="image-section piggy-section">
+      <div class="piggy-img">
+        <img src="logo/logo-img.png" alt="Digitalni Zamor" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Layout -->
+  <div class="dashboard-layout">
+    <!-- Left Section: Budget Overview & Add Transaction -->
+    <div class="left-section">
+      <!-- Loading Indicator -->
+      <div *ngIf="isLoadingOverview" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>Učitavanje podataka...</p>
+      </div>
+
+      <!-- Tiredness Overview Component -->
+      <app-tiredness-overview
+        *ngIf="!isLoadingOverview"
+        [workNetworkTime]="workNetworkTime"
+        [homeTime]="homeTime"
+        [symptomsCount]="symptomsCount">
+      </app-tiredness-overview>
+
+      <!-- Add Event/Symptom Component -->
+      <app-add-event
+        (eventAdded)="onEventAdded($event)">
+      </app-add-event>
+    </div>
+
+    <!-- Right Section: Transaction History -->
+    <div class="right-section">
+      <app-event-history
+        [events]="events"
+        (editRequested)="onEditRequested($event)"
+        (deleteRequested)="onDeleteRequested($event)"
+        (analyticsOpened)="onAnalyticsOpened()">
+      </app-event-history>
+    </div>
+  </div>
+
+  <!-- Mobile Add Button -->
+  <app-button 
+    class="mobile-add-btn"
+    (click)="onAnalyticsOpened()">
+    <i class="fas fa-plus"></i>
+  </app-button>
+</div>

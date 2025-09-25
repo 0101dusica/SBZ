@@ -1,0 +1,36 @@
+<button
+  *ngIf="!routerLink"
+  class="button"
+  [class.primary]="variant === 'primary'"
+  [class.outline]="variant === 'outline'"
+  [class.icon]="variant === 'icon'"
+  [class.small]="size === 'small'"
+  [class.medium]="size === 'medium'"
+  [class.large]="size === 'large'"
+  [disabled]="disabled || loading"
+  (click)="onClick()"
+>
+  <ng-container *ngIf="!loading; else processingTpl">
+    <ng-content></ng-content>
+    <span *ngIf="label">{{ label }}</span>
+  </ng-container>
+
+  <ng-template #processingTpl>
+    <span class="spinner"></span> Processing...
+  </ng-template>
+</button>
+
+<a
+  *ngIf="routerLink"
+  class="button"
+  [class.primary]="variant === 'primary'"
+  [class.outline]="variant === 'outline'"
+  [class.icon]="variant === 'icon'"
+  [class.small]="size === 'small'"
+  [class.medium]="size === 'medium'"
+  [class.large]="size === 'large'"
+  [routerLink]="routerLink"
+>
+  <ng-content></ng-content>
+  <span *ngIf="label">{{ label }}</span>
+</a>

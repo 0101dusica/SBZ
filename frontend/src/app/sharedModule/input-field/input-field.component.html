@@ -1,0 +1,16 @@
+<div class="input-field">
+  <label *ngIf="label" class="input-label">{{ label }}</label>
+  <div class="input-container">
+    <input
+      [type]="type"
+      [name]="name"
+      [placeholder]="placeholder"
+      class="custom-input"
+      [value]="value"
+      (input)="onInput($event)"
+      [readonly]="readOnly"
+      [min]="min"
+      [max]="max"
+    />
+  </div>
+</div>

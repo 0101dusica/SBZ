@@ -1,0 +1,112 @@
+.budget-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+.budget-left-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #b9b26c 0%, #576d2c 100%);
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 1rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.amount {
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1;
+}
+
+.chart-container {
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-chart {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: white;
+}
+
+.budget-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.budget-card {
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.total-budget {
+  background: linear-gradient(135deg, #f2e08c 0%, #576d2c 100%);
+  color: white;
+}
+
+.total-expense {
+  background: linear-gradient(135deg, #576d2c 0%, #f2e08c 100%);
+  color: white;
+}
+
+.budget-card p {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.budget-card h4 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .budget-left-card {
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+  
+  .amount {
+    font-size: 2.5rem;
+  }
+  
+  .budget-cards {
+    grid-template-columns: 1fr;
+  }
+}
