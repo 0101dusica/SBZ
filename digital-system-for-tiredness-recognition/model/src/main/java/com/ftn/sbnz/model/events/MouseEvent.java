@@ -1,23 +1,29 @@
 package com.ftn.sbnz.model.events;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-public class MouseEvent implements Serializable {
-    private LocalDateTime ts;
-    private double moveRate;
-    private double clickRate;
+public class MouseEvent {
+    public long id;
+    public long sessionId;
+    public int movementCount;
+    public int clickCount;
+    public long startTimestamp;
 
     public MouseEvent() {}
-    public MouseEvent(LocalDateTime ts, double moveRate, double clickRate) {
-        this.ts = ts;
-        this.moveRate = moveRate;
-        this.clickRate = clickRate;
+    public MouseEvent(long id, long sessionId, int movementCount, int clickCount, long startTimestamp) {
+        this.id = id;
+        this.sessionId = sessionId;
+        this.movementCount = movementCount;
+        this.clickCount = clickCount;
+        this.startTimestamp = startTimestamp;
     }
-    public LocalDateTime getTs() { return ts; }
-    public void setTs(LocalDateTime ts) { this.ts = ts; }
-    public double getMoveRate() { return moveRate; }
-    public void setMoveRate(double moveRate) { this.moveRate = moveRate; }
-    public double getClickRate() { return clickRate; }
-    public void setClickRate(double clickRate) { this.clickRate = clickRate; }
+
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+    public long getSessionId() { return sessionId; }
+    public void setSessionId(long sessionId) { this.sessionId = sessionId; }
+    public int getMovementCount() { return movementCount; }
+    public void setMovementCount(int movementCount) { this.movementCount = movementCount; }
+    public int getClickCount() { return clickCount; }
+    public void setClickCount(int clickCount) { this.clickCount = clickCount; }
+    public long getStartTimestamp() { return startTimestamp; }
+    public void setStartTimestamp(long startTimestamp) { this.startTimestamp = startTimestamp; }
 }

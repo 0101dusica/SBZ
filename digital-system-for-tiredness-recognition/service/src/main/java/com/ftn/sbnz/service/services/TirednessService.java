@@ -1,123 +1,164 @@
 package com.ftn.sbnz.service.services;
 
-import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.events.*;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.models.enums.DeviceType;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 public class TirednessService {
 
     private final KieContainer kieContainer;
-    private final ConcurrentHashMap<String, KieSession> activeSessions;
+//    private KieSession kieSession;
+
+    private KieSession mainKieSession;
+    private KieSession cepKieSession;
+
+//    public TirednessService(KieContainer kieContainer) {
+//        this.kieContainer = kieContainer;
+//    }
 
     public TirednessService(KieContainer kieContainer) {
         this.kieContainer = kieContainer;
-        this.activeSessions = new ConcurrentHashMap<>();
+        this.mainKieSession = kieContainer.newKieSession("mainKSession");
+        this.cepKieSession = kieContainer.newKieSession("cepKsession");
     }
 
-    public String addSessions(List<Session> sessions) {
-        try {
-            KieSession kieSession = kieContainer.newKieSession("cepKSession");
-            String sessionKey = "main_session_" + System.currentTimeMillis();
+    public void addSessions(List<Session> sessions) {
+        for (Session session : sessions) {
+            // 1) Insert u mainKieSession (za same ActivityEvent i Session podatke)
+            mainKieSession.insert(session);
 
-            for (Session session : sessions) {
-                kieSession.insert(session);
-                for (ActivityEvent event : session.getActivityEvents()) {
-                    kieSession.insert(event);
-                }
+            // 2) Insert ActivityEvent u CEP + derivacije
+            for (ActivityEvent activityEvent : session.getActivityEvents()) {
+                insertDerivedEvents(activityEvent);
             }
-            kieSession.fireAllRules();
-
-            activeSessions.put(sessionKey, kieSession);
-            return sessionKey;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Failed to add sessions: " + e.getMessage();
         }
+
+        // 3) CEP prvo izvršava pravila i kreira signal eventove
+        cepKieSession.fireAllRules();
+
+        // 4) Ubaci signale iz CEP sesije u mainKieSession
+        cepKieSession.getObjects(obj -> obj instanceof FocusDropEvent
+                        || obj instanceof PassiveBingeEvent
+                        || obj instanceof NoBreakStreakEvent
+                        || obj instanceof MultiTaskOverloadEvent
+                        || obj instanceof EarlyFatigueSignal
+                        || obj instanceof MentalFatigueSignal)
+                .forEach(mainKieSession::insert);
+
+        // 5) FireAllRules na mainKieSession za generisanje preporuka
+        mainKieSession.fireAllRules();
     }
 
     public List<Recommendation> processEvent(ActivityEvent event) {
-        try {
-            // Za demonstraciju, koristimo poslednju aktivnu sesiju
-            // U realnoj aplikaciji, trebalo bi da identifikujemo pravu sesiju
-            KieSession kieSession = getActiveSession();
-            if (kieSession == null) {
-                return List.of();
-            }
+        insertDerivedEvents(event);
 
-            kieSession.insert(event);
-            kieSession.fireAllRules();
+        // 1) CEP prvo
+        cepKieSession.fireAllRules();
 
-            return kieSession.getObjects(obj -> obj instanceof Recommendation)
-                    .stream()
-                    .map(obj -> (Recommendation) obj)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return List.of();
-        }
+        // 2) Ubaci signale u mainKieSession
+        cepKieSession.getObjects(obj -> obj instanceof FocusDropEvent
+                        || obj instanceof PassiveBingeEvent
+                        || obj instanceof NoBreakStreakEvent
+                        || obj instanceof MultiTaskOverloadEvent
+                        || obj instanceof EarlyFatigueSignal
+                        || obj instanceof MentalFatigueSignal)
+                .forEach(mainKieSession::insert);
+
+        // 3) Glavna sesija
+        mainKieSession.fireAllRules();
+
+        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation)obj)
+                .collect(Collectors.toList());
     }
+
+
+    private void insertDerivedEvents(ActivityEvent activityEvent) {
+        long sessionId = activityEvent.getSessionId();
+
+        // 1) Ako je tipkanje (WORK sa typingSpeed > 0)
+        if (activityEvent.getActivityType() == ActivityType.WORK
+                && activityEvent.getTypingSpeed() > 0) {
+            System.out.println("PRAVI KEY STROKE");
+            KeyStrokeEvent keyStrokeEvent = new KeyStrokeEvent(
+                    sessionId,
+                    activityEvent.getStartTimestamp(),
+                    activityEvent.getTypingSpeed(),
+                    activityEvent.getErrors()
+            );
+            cepKieSession.insert(keyStrokeEvent);
+        }
+
+        // 2) Ako je entertainment/social
+        if (activityEvent.getActivityType() == ActivityType.ENTERTAINMENT) {
+            System.out.println("PRAVI APP FOCUS EVENT");
+            AppFocusEvent appFocusEvent = new AppFocusEvent(
+                    sessionId,
+                    "ENTERTAINMENT",
+                    activityEvent.getStartTimestamp(),
+                    activityEvent.getActivityDuration()
+            );
+            cepKieSession.insert(appFocusEvent);
+        }
+
+        // 3) Ako ima break (breakDuration >= 0)
+        if (activityEvent.getBreakDuration() >= 0) {
+            System.out.println("PRAVI BREAK EVENT");
+            UserBreakEvent userBreakEvent = new UserBreakEvent(
+                    sessionId,
+                    activityEvent.getStartTimestamp(),
+                    activityEvent.getBreakDuration()
+            );
+            cepKieSession.insert(userBreakEvent);
+        }
+
+        ScreenTimeEvent screenTimeEvent = new ScreenTimeEvent(
+                activityEvent.getStartTimestamp(),
+                activityEvent.getDeviceType() == DeviceType.COMPUTING_DEVICE ? "COMPUTER" : "PHONE",
+                activityEvent.getActivityDuration()
+        );
+        cepKieSession.insert(screenTimeEvent);
+    }
+
 
     public List<Recommendation> getRecommendationsForSession(long sessionId) {
-        try {
-            KieSession kieSession = getActiveSession();
-            if (kieSession == null) {
-                return List.of();
-            }
-
-            return kieSession.getObjects(obj -> obj instanceof Recommendation)
-                    .stream()
-                    .map(obj -> (Recommendation) obj)
-                    .filter(rec -> rec.getSessionId() == sessionId)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return List.of();
-        }
+        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation)obj)
+                .filter(rec -> rec.getSessionId() == sessionId)
+                .collect(Collectors.toList());
     }
+
 
     public String endSession() {
         try {
-            if (!activeSessions.isEmpty()) {
-                activeSessions.values().forEach(KieSession::dispose);
-                activeSessions.clear();
-                return "Successfully ended all sessions";
-            } else {
-                return "No active sessions to end";
+            if (mainKieSession != null) {
+                mainKieSession.dispose();
+                mainKieSession = null;
             }
-        } catch (Exception e) {
+
+            if (cepKieSession != null) {
+                cepKieSession.dispose();
+                cepKieSession = null;
+            }
+
+            return "Successfully ended all sessions";
+        } catch(Exception e) {
             e.printStackTrace();
-            return "Failed to end sessions: " + e.getMessage();
+            return "Failed to end sessions...";
         }
     }
 
-    public String endSession(String sessionKey) {
-        try {
-            KieSession session = activeSessions.remove(sessionKey);
-            if (session != null) {
-                session.dispose();
-                return "Successfully ended session: " + sessionKey;
-            } else {
-                return "Session not found: " + sessionKey;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Failed to end session: " + e.getMessage();
-        }
-    }
 
-    private KieSession getActiveSession() {
-        return activeSessions.values().stream().findFirst().orElse(null);
-    }
 
-    public int getActiveSessionsCount() {
-        return activeSessions.size();
-    }
 }

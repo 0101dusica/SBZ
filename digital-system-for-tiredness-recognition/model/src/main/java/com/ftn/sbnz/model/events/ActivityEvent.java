@@ -1,92 +1,60 @@
 package com.ftn.sbnz.model.events;
 
-import com.ftn.sbnz.model.enums.ActivityType;
-
-import java.time.LocalDateTime;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.models.enums.DeviceType;
 
 public class ActivityEvent {
+    public long id;
+    public long sessionId;
+    public ActivityType activityType;
+    public DeviceType deviceType;
+    public long startTimestamp;
+    public long endTimestamp;
+    public int activityDuration;
+    public int breakDuration;
+    public int typingSpeed;
+    public int errors;
+    public String category;
 
-    private Long id;
-    private Long sessionId;
-    private ActivityType activityType;
-    private LocalDateTime timestamp;
-    private String details;
-    private double intensity; // 0.0 - 1.0
-    private int duration; // u sekundama
+    public ActivityEvent() {}
 
-    public ActivityEvent() {
-        this.timestamp = LocalDateTime.now();
-    }
-
-    public ActivityEvent(Long sessionId, ActivityType activityType) {
-        this.sessionId = sessionId;
-        this.activityType = activityType;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    public ActivityEvent(Long sessionId, ActivityType activityType, String details, double intensity) {
-        this.sessionId = sessionId;
-        this.activityType = activityType;
-        this.details = details;
-        this.intensity = intensity;
-        this.timestamp = LocalDateTime.now();
-    }
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
+    public ActivityEvent(long id, long sessionId, ActivityType activityType, DeviceType deviceType,
+                         long startTimestamp, long endTimestamp, int activityDuration, int breakDuration,
+                         int typingSpeed, int errors, String category) {
         this.id = id;
-    }
-
-    public Long getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(Long sessionId) {
         this.sessionId = sessionId;
-    }
-
-    public ActivityType getActivityType() {
-        return activityType;
-    }
-
-    public void setActivityType(ActivityType activityType) {
         this.activityType = activityType;
+        this.deviceType = deviceType;
+        this.startTimestamp = startTimestamp;
+        this.endTimestamp = endTimestamp;
+        this.activityDuration = activityDuration;
+        this.breakDuration = breakDuration;
+        this.typingSpeed = typingSpeed;
+        this.errors = errors;
+        this.category = category;
     }
 
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getDetails() {
-        return details;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
-    }
-
-    public double getIntensity() {
-        return intensity;
-    }
-
-    public void setIntensity(double intensity) {
-        this.intensity = intensity;
-    }
-
-    public int getDuration() {
-        return duration;
-    }
-
-    public void setDuration(int duration) {
-        this.duration = duration;
-    }
+    // Getteri i setteri
+    public long getId() { return id; }
+    public void setId(long id) { this.id = id; }
+    public long getSessionId() { return sessionId; }
+    public void setSessionId(long sessionId) { this.sessionId = sessionId; }
+    public ActivityType getActivityType() { return activityType; }
+    public void setActivityType(ActivityType activityType) { this.activityType = activityType; }
+    public DeviceType getDeviceType() { return deviceType; }
+    public void setDeviceType(DeviceType deviceType) { this.deviceType = deviceType; }
+    public long getStartTimestamp() { return startTimestamp; }
+    public void setStartTimestamp(long startTimestamp) { this.startTimestamp = startTimestamp; }
+    public long getEndTimestamp() { return endTimestamp; }
+    public void setEndTimestamp(long endTimestamp) { this.endTimestamp = endTimestamp; }
+    public int getActivityDuration() { return activityDuration; }
+    public void setActivityDuration(int activityDuration) { this.activityDuration = activityDuration; }
+    public int getBreakDuration() { return breakDuration; }
+    public void setBreakDuration(int breakDuration) { this.breakDuration = breakDuration; }
+    public int getTypingSpeed() { return typingSpeed; }
+    public void setTypingSpeed(int typingSpeed) { this.typingSpeed = typingSpeed; }
+    public int getErrors() { return errors; }
+    public void setErrors(int errors) { this.errors = errors; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 }
-

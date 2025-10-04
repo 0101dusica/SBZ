@@ -1,10 +1,10 @@
 package com.ftn.sbnz.model.events;
 
-public class FocusDropEvent {
+public class MultiTaskOverloadEvent {
     public Long ts;
 
-    public FocusDropEvent() {}
-    public FocusDropEvent(Long ts) { this.ts = ts; }
+    public MultiTaskOverloadEvent() {}
+    public MultiTaskOverloadEvent(Long ts) { this.ts = ts; }
 
     public long getTs() { return ts; }
     public void setTs(Long ts) { this.ts = ts; }

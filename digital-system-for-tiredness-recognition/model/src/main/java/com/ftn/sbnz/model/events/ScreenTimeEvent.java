@@ -1,23 +1,21 @@
 package com.ftn.sbnz.model.events;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-public class ScreenTimeEvent implements Serializable {
-    private LocalDateTime ts;
-    private String device;
-    private boolean active;
+public class ScreenTimeEvent {
+    public long ts;
+    public String device;
+    public int active;
 
     public ScreenTimeEvent() {}
-    public ScreenTimeEvent(LocalDateTime ts, String device, boolean active) {
+    public ScreenTimeEvent(long ts, String device, int active) {
         this.ts = ts;
         this.device = device;
         this.active = active;
     }
-    public LocalDateTime getTs() { return ts; }
-    public void setTs(LocalDateTime ts) { this.ts = ts; }
+
+    public long getTs() { return ts; }
+    public void setTs(long ts) { this.ts = ts; }
     public String getDevice() { return device; }
     public void setDevice(String device) { this.device = device; }
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
+    public int getActive() { return active; }
+    public void setActive(int active) { this.active = active; }
 }

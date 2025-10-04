@@ -1,19 +1,21 @@
 package com.ftn.sbnz.model.events;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-public class UserBreakEvent implements Serializable {
-    private LocalDateTime ts;
-    private int duration; // in minutes
+public class UserBreakEvent {
+    public long sessionId;
+    public long ts;
+    public long breakDuration;
 
     public UserBreakEvent() {}
-    public UserBreakEvent(LocalDateTime ts, int duration) {
+    public UserBreakEvent(long sessionId, long ts, long breakDuration) {
+        this.sessionId = sessionId;
         this.ts = ts;
-        this.duration = duration;
+        this.breakDuration = breakDuration;
     }
-    public LocalDateTime getTs() { return ts; }
-    public void setTs(LocalDateTime ts) { this.ts = ts; }
-    public int getDuration() { return duration; }
-    public void setDuration(int duration) { this.duration = duration; }
+
+    public long getSessionId() { return sessionId; }
+    public void setSessionId(long sessionId) { this.sessionId = sessionId; }
+    public long getTs() { return ts; }
+    public void setTs(long ts) { this.ts = ts; }
+    public long getBreakDuration() { return breakDuration; }
+    public void setBreakDuration(long breakDuration) { this.breakDuration = breakDuration; }
 }

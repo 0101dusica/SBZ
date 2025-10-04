@@ -1,10 +1,10 @@
 package com.ftn.sbnz.model.events;
 
-public class FocusDropEvent {
+public class NoBreakStreakEvent {
     public Long ts;
 
-    public FocusDropEvent() {}
-    public FocusDropEvent(Long ts) { this.ts = ts; }
+    public NoBreakStreakEvent() {}
+    public NoBreakStreakEvent(Long ts) { this.ts = ts; }
 
     public long getTs() { return ts; }
     public void setTs(Long ts) { this.ts = ts; }
