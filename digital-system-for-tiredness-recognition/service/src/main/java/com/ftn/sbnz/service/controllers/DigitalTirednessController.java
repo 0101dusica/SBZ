@@ -1,17 +1,19 @@
 package com.ftn.sbnz.service.controllers;
 
 import com.ftn.sbnz.model.dto.SessionDTO;
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
 import com.ftn.sbnz.model.events.ActivityEvent;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
 import com.ftn.sbnz.service.services.TirednessService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tiredness-system")
-@CrossOrigin(origins = "*") // Za testiranje sa frontendom
+@CrossOrigin(origins = {"http://localhost:4200"})
 public class DigitalTirednessController {
 
     private final TirednessService tirednessService;
@@ -20,47 +22,57 @@ public class DigitalTirednessController {
         this.tirednessService = tirednessService;
     }
 
-    // Inicijalizacija sesija u memoriji
-    @PostMapping("/add")
-    public String addSessions(@RequestBody SessionDTO sessionDTO) {
+    // sent init sessions in memory
+    @PostMapping("/init-session")
+    public void initSession(@RequestBody SessionDTO sessionDTO) {
         List<Session> allSessions = sessionDTO.getSessions();
-        return tirednessService.addSessions(allSessions);
+        tirednessService.initSessions(allSessions);
     }
 
-    // Dodavanje novog događaja u sesiju
-    @PostMapping("/event")
+    // add new event in one session
+    @PostMapping("/add-event")
     public List<Recommendation> processEvent(@RequestBody ActivityEvent event) {
+        System.out.println(event.sessionId);
         return tirednessService.processEvent(event);
     }
 
-    // Dobijanje preporuka za određenu sesiju
-    @GetMapping("/recommendations/{sessionId}")
+    @GetMapping("/current-session/{sessionId}")
+    public Session getSession(@PathVariable Long sessionId) {
+        return tirednessService.getSessionById(sessionId);
+    }
+
+    @GetMapping("/session-recommendations/{sessionId}")
     public List<Recommendation> getRecommendations(@PathVariable long sessionId) {
         return tirednessService.getRecommendationsForSession(sessionId);
     }
 
-    // Završavanje svih sesija
+    @GetMapping("/recommendations/user/{userId}")
+    public List<Recommendation> getRecommendationsForUser(@PathVariable long userId) {
+        return java.util.Collections.emptyList();
+        // return tirednessService.getRecommendationsForSession(userId);
+    }
+
+    @PostMapping("/report-tiredness")
+    public Recommendation reportTiredness(@RequestBody TirednessReportDTO report) {
+        return tirednessService.backwardChaining(report);
+    }
+
+
+    // to do: save sessions by user in one json
     @PostMapping("/end-session")
     public String endSession(){
         return tirednessService.endSession();
     }
 
-    // Završavanje specifične sesije
-    @PostMapping("/end-session/{sessionKey}")
-    public String endSpecificSession(@PathVariable String sessionKey){
-        return tirednessService.endSession(sessionKey);
+    @PostMapping("/submit-tiredness-level/{sessionId}")
+    public ResponseEntity<Void> submitTirednessLevel(@PathVariable long sessionId, @RequestBody int level) {
+        // TODO: implement logic
+        return ResponseEntity.ok().build();
     }
 
-    // Status aktivnih sesija - korisno za testiranje
-    @GetMapping("/status")
-    public String getStatus() {
-        int activeCount = tirednessService.getActiveSessionsCount();
-        return "Active sessions: " + activeCount;
-    }
-
-    // Test endpoint - za brzu proveru da li aplikacija radi
-    @GetMapping("/health")
-    public String health() {
-        return "Tiredness Recognition System is running!";
+    @GetMapping("/activities/{sessionId}")
+    public List<ActivityEvent> getActivitiesForSession(@PathVariable long sessionId) {
+        // TODO: implement logic to return activities for session
+        return java.util.Collections.emptyList();
     }
 }

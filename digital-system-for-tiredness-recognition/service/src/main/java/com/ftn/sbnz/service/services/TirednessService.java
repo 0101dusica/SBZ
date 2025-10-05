@@ -1,123 +1,274 @@
 package com.ftn.sbnz.service.services;
 
-import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
+import com.ftn.sbnz.model.events.*;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.Template;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.models.enums.DeviceType;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+import org.drools.core.time.SessionPseudoClock;
+import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.conf.ClockTypeOption;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
 public class TirednessService {
 
     private final KieContainer kieContainer;
-    private final ConcurrentHashMap<String, KieSession> activeSessions;
+    private final TemplateService templateService;
 
-    public TirednessService(KieContainer kieContainer) {
+    private KieSession mainKieSession;
+    private KieSession cepKieSession;
+    private KieSession backwardKieSession;
+    private KieSession templateKieSession;
+
+    public TirednessService(KieContainer kieContainer, TemplateService templateService) {
         this.kieContainer = kieContainer;
-        this.activeSessions = new ConcurrentHashMap<>();
+        this.templateService = templateService;
+        this.mainKieSession = kieContainer.newKieSession("mainKSession");
+
+        KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
+        config.setOption(ClockTypeOption.get("pseudo"));
+        this.cepKieSession = kieContainer.newKieSession("cepKSession", config);
+
+        this.backwardKieSession = kieContainer.newKieSession("backwardKSession");
+        this.templateKieSession = kieContainer.newKieSession("templateKSession");
     }
 
-    public String addSessions(List<Session> sessions) {
-        try {
-            KieSession kieSession = kieContainer.newKieSession("cepKSession");
-            String sessionKey = "main_session_" + System.currentTimeMillis();
+    public void initSessions(List<Session> sessions) {
+        for (Session session : sessions) {
+            System.out.println("Inserting session: " + session.getSessionId() +
+                    " for user: " + session.getUserId() +
+                    " with mainKieSession: " + mainKieSession);
+            mainKieSession.insert(session);
+            System.out.println("Session: " + mainKieSession.getObjects(obj -> obj instanceof Session)
+                    .stream()
+                    .map(obj -> (Session) obj)
+                    .filter(session1 -> session1.getSessionId() == 11)
+                    .findFirst()
+                    .orElse(null)
+            );
 
-            for (Session session : sessions) {
-                kieSession.insert(session);
-                for (ActivityEvent event : session.getActivityEvents()) {
-                    kieSession.insert(event);
-                }
+            for (ActivityEvent activityEvent : session.getActivityEvents()) {
+                backwardKieSession.insert(activityEvent);
+                insertDerivedEvents(activityEvent);
             }
-            kieSession.fireAllRules();
-
-            activeSessions.put(sessionKey, kieSession);
-            return sessionKey;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Failed to add sessions: " + e.getMessage();
         }
+
+        cepKieSession.fireAllRules();
+
+        cepKieSession.getObjects(obj -> obj instanceof FocusDropEvent
+                        || obj instanceof PassiveBingeEvent
+                        || obj instanceof NoBreakStreakEvent
+                        || obj instanceof MultiTaskOverloadEvent
+                        || obj instanceof EarlyFatigueSignal
+                        || obj instanceof MentalFatigueSignal
+                        || obj instanceof HighRiskTodaySignal)
+                .forEach(mainKieSession::insert);
+
+
+        mainKieSession.fireAllRules();
     }
+
+    public Session getSessionById(Long sessionId) {
+        return mainKieSession.getObjects(obj -> obj instanceof Session)
+                .stream()
+                .map(obj -> (Session) obj)
+                .filter(session -> session.getSessionId() == sessionId)
+                .findFirst()
+                .orElse(null);
+    }
+
 
     public List<Recommendation> processEvent(ActivityEvent event) {
-        try {
-            // Za demonstraciju, koristimo poslednju aktivnu sesiju
-            // U realnoj aplikaciji, trebalo bi da identifikujemo pravu sesiju
-            KieSession kieSession = getActiveSession();
-            if (kieSession == null) {
-                return List.of();
-            }
-
-            kieSession.insert(event);
-            kieSession.fireAllRules();
-
-            return kieSession.getObjects(obj -> obj instanceof Recommendation)
-                    .stream()
-                    .map(obj -> (Recommendation) obj)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return List.of();
+        Session session = getSessionById(event.getSessionId());
+        if (session != null) {
+            session.getActivityEvents().add(event);
+            mainKieSession.update(mainKieSession.getFactHandle(session), session);
+            
+            // Dodaj template pravila
+            processTemplateRules(session, event);
         }
+        insertDerivedEvents(event);
+
+        cepKieSession.fireAllRules();
+
+        cepKieSession.getObjects(obj -> obj instanceof FocusDropEvent
+                        || obj instanceof PassiveBingeEvent
+                        || obj instanceof NoBreakStreakEvent
+                        || obj instanceof MultiTaskOverloadEvent
+                        || obj instanceof EarlyFatigueSignal
+                        || obj instanceof MentalFatigueSignal
+                        || obj instanceof HighRiskTodaySignal)
+                .forEach(mainKieSession::insert);
+
+        mainKieSession.fireAllRules();
+
+        // Kombinuj preporuke iz glavnog i template KieSession-a
+        List<Recommendation> mainRecommendations = mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation)obj)
+                .filter(rec -> rec.getSessionId() == event.sessionId)
+                .collect(Collectors.toList());
+                
+        List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation)obj)
+                .filter(rec -> rec.getSessionId() == event.sessionId)
+                .collect(Collectors.toList());
+        
+        // Kombinuj oba lista
+        mainRecommendations.addAll(templateRecommendations);
+        
+        return mainRecommendations.stream()
+                .sorted(Comparator.comparingInt(rec -> rec.getRiskLevel().ordinal()))
+                .collect(Collectors.toList());
     }
+    
+    private void processTemplateRules(Session session, ActivityEvent event) {
+        // Učitaj template za korisnika
+        Template userTemplate = templateService.getUserTemplate(session.getUserId());
+        
+        // Ubaci template u template KieSession
+        templateKieSession.insert(userTemplate);
+        templateKieSession.insert(session);
+        templateKieSession.insert(event);
+        
+        // Pokreni template pravila
+        templateKieSession.fireAllRules();
+        
+        System.out.println("Template rules processed for user: " + session.getUserId() + 
+                          " with template: " + userTemplate.getName());
+    }
+
+
+    private void insertDerivedEvents(ActivityEvent activityEvent) {
+        long sessionId = activityEvent.getSessionId();
+        SessionPseudoClock clock = cepKieSession.getSessionClock();
+
+        if (activityEvent.getActivityType() == ActivityType.WORK
+                && activityEvent.getTypingSpeed() > 0) {
+            System.out.println("CREATE KEY STROKE");
+            KeyStrokeEvent keyStrokeEvent = new KeyStrokeEvent(
+                    sessionId,
+                    activityEvent.getStartTimestamp(),
+                    activityEvent.getTypingSpeed(),
+                    activityEvent.getErrors()
+            );
+            cepKieSession.insert(keyStrokeEvent);
+            clock.advanceTime(keyStrokeEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
+        }
+
+
+        if (activityEvent.getActivityType() == ActivityType.ENTERTAINMENT) {
+            System.out.println("CREATE APP FOCUS EVENT");
+            AppFocusEvent appFocusEvent = new AppFocusEvent(
+                    sessionId,
+                    activityEvent.category,
+                    activityEvent.getStartTimestamp(),
+                    activityEvent.getActivityDuration()
+            );
+            cepKieSession.insert(appFocusEvent);
+            clock.advanceTime(appFocusEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
+        }
+
+        if (activityEvent.getBreakDuration() >= 0) {
+            System.out.println("CREATE USER ACTIVE EVENT");
+            UserActiveEvent activeEvent = new UserActiveEvent(
+                    sessionId,
+                    activityEvent.getStartTimestamp(),
+                    activityEvent.getActivityDuration(),
+                    activityEvent.getBreakDuration()
+            );
+            cepKieSession.insert(activeEvent);
+            clock.advanceTime(activeEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
+        }
+
+    }
+
 
     public List<Recommendation> getRecommendationsForSession(long sessionId) {
-        try {
-            KieSession kieSession = getActiveSession();
-            if (kieSession == null) {
-                return List.of();
-            }
-
-            return kieSession.getObjects(obj -> obj instanceof Recommendation)
-                    .stream()
-                    .map(obj -> (Recommendation) obj)
-                    .filter(rec -> rec.getSessionId() == sessionId)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return List.of();
-        }
+        List<Recommendation> mainRecommendations = mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation) obj)
+                .filter(rec -> rec.getSessionId() == sessionId)
+                .collect(Collectors.toList());
+                
+        List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation) obj)
+                .filter(rec -> rec.getSessionId() == sessionId)
+                .collect(Collectors.toList());
+        
+        // Kombinuj oba lista
+        mainRecommendations.addAll(templateRecommendations);
+        
+        return mainRecommendations.stream()
+                .sorted(Comparator.comparingInt(rec -> rec.getRiskLevel().ordinal()))
+                .collect(Collectors.toList());
     }
+
+
+//    public List<Recommendation> getRecommendationsForUser(long userId) {
+//        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+//                .stream()
+//                .map(obj -> (Recommendation)obj)
+//                .filter(rec -> rec.getSessionId() == sessionId)
+//                .collect(Collectors.toList());
+//    }
+
+    public Recommendation backwardChaining(TirednessReportDTO report) {
+        backwardKieSession.insert(report);
+        backwardKieSession.fireAllRules();
+
+        backwardKieSession.fireAllRules();
+
+        List<Recommendation> recommendations = backwardKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation) obj)
+                .sorted(Comparator.comparingInt(r -> r.getRiskLevel().ordinal()))
+                .map(obj -> (Recommendation)obj)
+                .collect(Collectors.toList());
+
+        return recommendations.isEmpty() ? null : recommendations.get(0);
+    }
+
 
     public String endSession() {
         try {
-            if (!activeSessions.isEmpty()) {
-                activeSessions.values().forEach(KieSession::dispose);
-                activeSessions.clear();
-                return "Successfully ended all sessions";
-            } else {
-                return "No active sessions to end";
+            if (mainKieSession != null) {
+                mainKieSession.dispose();
+                mainKieSession = null;
             }
-        } catch (Exception e) {
+
+            if (cepKieSession != null) {
+                cepKieSession.dispose();
+                cepKieSession = null;
+            }
+
+            if (backwardKieSession != null) {
+                backwardKieSession.dispose();
+                backwardKieSession = null;
+            }
+
+            return "Successfully ended all sessions";
+        } catch(Exception e) {
             e.printStackTrace();
-            return "Failed to end sessions: " + e.getMessage();
+            return "Failed to end sessions...";
         }
     }
 
-    public String endSession(String sessionKey) {
-        try {
-            KieSession session = activeSessions.remove(sessionKey);
-            if (session != null) {
-                session.dispose();
-                return "Successfully ended session: " + sessionKey;
-            } else {
-                return "Session not found: " + sessionKey;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Failed to end session: " + e.getMessage();
-        }
-    }
 
-    private KieSession getActiveSession() {
-        return activeSessions.values().stream().findFirst().orElse(null);
-    }
 
-    public int getActiveSessionsCount() {
-        return activeSessions.size();
-    }
 }

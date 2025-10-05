@@ -1,38 +1,40 @@
 package com.ftn.sbnz.model.models;
 
 import com.ftn.sbnz.model.events.ActivityEvent;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Session {
-
-    private Long id;
+    private Long sessionId;
     private Long userId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private Long startTimestamp;
+    private Long endTimestamp;
     private List<ActivityEvent> activityEvents;
-    private String sessionType;
 
-    public Session() {
-        this.activityEvents = new ArrayList<>();
-    }
 
-    public Session(Long id, Long userId, LocalDateTime startTime) {
-        this.id = id;
+    public Session(Long sessionId, Long userId, Long startTimestamp, Long endTimestamp,
+                   int subjectiveTirednessLevel, List<String> risks, int riskLevel,
+                   List<ActivityEvent> activityEvents) {
+        this.sessionId = sessionId;
         this.userId = userId;
-        this.startTime = startTime;
-        this.activityEvents = new ArrayList<>();
+        this.startTimestamp = startTimestamp;
+        this.endTimestamp = endTimestamp;
+        this.activityEvents = (activityEvents != null) ? activityEvents : new ArrayList<>();
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    public Long getSessionId() {
+        return sessionId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setSessionId(Long sessionId) {
+        this.sessionId = sessionId;
     }
 
     public Long getUserId() {
@@ -43,40 +45,29 @@ public class Session {
         this.userId = userId;
     }
 
-    public LocalDateTime getStartTime() {
-        return startTime;
+    public Long getStartTimestamp() {
+        return startTimestamp;
     }
 
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
+    public void setStartTimestamp(Long startTimestamp) {
+        this.startTimestamp = startTimestamp;
     }
 
-    public LocalDateTime getEndTime() {
-        return endTime;
+    public Long getEndTimestamp() {
+        return endTimestamp;
     }
 
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
+    public void setEndTimestamp(Long endTimestamp) {
+        this.endTimestamp = endTimestamp;
     }
+
 
     public List<ActivityEvent> getActivityEvents() {
         return activityEvents;
     }
 
     public void setActivityEvents(List<ActivityEvent> activityEvents) {
-        this.activityEvents = activityEvents;
-    }
-
-    public String getSessionType() {
-        return sessionType;
-    }
-
-    public void setSessionType(String sessionType) {
-        this.sessionType = sessionType;
-    }
-
-    public void addActivityEvent(ActivityEvent event) {
-        this.activityEvents.add(event);
+        this.activityEvents = (activityEvents != null) ? activityEvents : new ArrayList<>();
     }
 }
 

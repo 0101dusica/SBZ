@@ -1,1 +1,58 @@
+package rules.main;
+dialect  "mvel"
+
+import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+import com.ftn.sbnz.model.events.EarlyFatigueSignal;
+import com.ftn.sbnz.model.events.MentalFatigueSignal;
+import com.ftn.sbnz.model.events.HighRiskTodaySignal;
+
+
+rule "Recommendation early fatigue"
+when
+    $session: Session($id: sessionId)
+    $signal: EarlyFatigueSignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.LOW) )
+then
+    insert(new Recommendation(
+        $id,
+        "Take a 10-min break and stretch your eyes.",
+        TirednessRisk.LOW
+    ));
+end
+
+rule "Recommendation mental fatigue"
+when
+    $session: Session($id: sessionId)
+    $signal: MentalFatigueSignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.MEDIUM) )
+then
+    insert(new Recommendation(
+        $id,
+        "Limit social media for 30 min, take an active break.",
+        TirednessRisk.MEDIUM
+    ));
+end
+
+rule "Recommendation high risk today"
+when
+    $session: Session($id: sessionId)
+    $signal: HighRiskTodaySignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.HIGH) )
+then
+    insert(new Recommendation(
+        $id,
+        "Take a 20–30 min break and switch to a different activity type (walk or light exercise).",
+        TirednessRisk.HIGH
+    ));
+end
+
+
+
+
+
+
+
+
 

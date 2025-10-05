@@ -1,21 +1,23 @@
 package com.ftn.sbnz.model.events;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
-public class KeyStrokeEvent implements Serializable {
-    private LocalDateTime ts;
-    private double charsPerMin;
-    private double errorRate;
+public class KeyStrokeEvent {
+    public long sessionId;
+    public long ts;
+    public double charsPerMin;
+    public double errorRate;
 
     public KeyStrokeEvent() {}
-    public KeyStrokeEvent(LocalDateTime ts, double charsPerMin, double errorRate) {
+    public KeyStrokeEvent(long sessionId, long ts, double charsPerMin, double errorRate) {
+        this.sessionId = sessionId;
         this.ts = ts;
         this.charsPerMin = charsPerMin;
         this.errorRate = errorRate;
     }
-    public LocalDateTime getTs() { return ts; }
-    public void setTs(LocalDateTime ts) { this.ts = ts; }
+
+    public long getSessionId() { return sessionId; }
+    public void setSessionId(long sessionId) { this.sessionId = sessionId; }
+    public long getTs() { return ts; }
+    public void setTs(long ts) { this.ts = ts; }
     public double getCharsPerMin() { return charsPerMin; }
     public void setCharsPerMin(double charsPerMin) { this.charsPerMin = charsPerMin; }
     public double getErrorRate() { return errorRate; }

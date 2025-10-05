@@ -1,0 +1,48 @@
+{
+  "sessions": [
+    {
+      "sessionId": 64524,
+      "userId": 100,
+      "startTimestamp": 1759650000000,
+      "endTimestamp": 1759657200000,
+      "activityEvents": [
+        {
+          "id": 1,
+          "sessionId": 64524,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650000000,
+          "endTimestamp": 1759650600000,
+          "activityDuration": 60,
+          "breakDuration": 0,
+          "typingSpeed": 220,
+          "errors": 10
+        },
+        {
+          "id": 2,
+          "sessionId": 64524,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650900000,
+          "endTimestamp": 1759651500000,
+          "activityDuration": 60,
+          "breakDuration": 0,
+          "typingSpeed": 210,
+          "errors": 12
+        },
+        {
+          "id": 3,
+          "sessionId": 64524,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759651800000,
+          "endTimestamp": 1759652400000,
+          "activityDuration": 60,
+          "breakDuration": 0,
+          "typingSpeed": 150,
+          "errors": 20
+        }
+      ]
+    }
+  ]
+}

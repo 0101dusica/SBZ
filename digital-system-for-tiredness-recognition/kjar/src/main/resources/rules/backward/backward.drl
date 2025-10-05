@@ -1,1 +1,112 @@
-package backward;
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.hypothesis.WorkloadHypothesis;
+import com.ftn.sbnz.model.hypothesis.PassiveUseHypothesis;
+import com.ftn.sbnz.model.hypothesis.MultitaskHypothesis;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+
+import java.util.List;
+
+declare WorkloadCheck
+    sessionId: Long
+    level: int
+end
+
+declare PassiveUseCheck
+    sessionId: Long
+    level: int
+end
+
+declare MultitaskCheck
+    sessionId: Long
+    level: int
+end
+
+// ================= INITIALIZE =================
+rule "Initialize hypotheses"
+    salience 100
+when
+    $report: TirednessReportDTO(sessionId != null, subjectiveTirednessLevel >= 3)
+then
+    insert(new WorkloadHypothesis($report.getSessionId(), false));
+    insert(new PassiveUseHypothesis($report.getSessionId(), false));
+    insert(new MultitaskHypothesis($report.getSessionId(), false));
+
+    insert(new WorkloadCheck($report.getSessionId(), 1));
+    insert(new PassiveUseCheck($report.getSessionId(), 1));
+    insert(new MultitaskCheck($report.getSessionId(), 1));
+
+    System.out.println("[Init] Hypotheses created for session " + $report.getSessionId());
+end
+
+rule "Debug print all activity events"
+when
+    $e: ActivityEvent()
+then
+    System.out.println("[DEBUG] ActivityEvent session=" + $e.getSessionId() +
+                       ", type=" + $e.getActivityType() +
+                       ", duration=" + $e.getActivityDuration());
+end
+
+
+// ================= WORKLOAD =================
+rule "Workload Level 1 Recommendation"
+when
+    $check: WorkloadCheck($sid: sessionId, level == 1)
+    $h: WorkloadHypothesis(sessionId == $sid, confirmed == false)
+    $now: Number() from new java.lang.Long(System.currentTimeMillis())
+    $events: List() from collect(
+        ActivityEvent(
+            sessionId == $sid,
+            activityType == ActivityType.WORK,
+            activityDuration >= 60,
+            startTimestamp >= ($now.longValue() - 3*60*60*1000) // poslednja 3 sata
+        )
+    )
+    eval($events.size() >= 1)
+then
+    modify($h) { setConfirmed(true) }
+    insert(new Recommendation($sid, "Take a 20-min break and go for a walk.", TirednessRisk.MEDIUM));
+    System.out.println("[Workload L1] Recommendation issued for session " + $sid);
+end
+
+rule "Workload Level 2 Trigger"
+when
+    $check: WorkloadCheck($sid: sessionId, level == 1)
+    $h: WorkloadHypothesis(sessionId == $sid, confirmed == false)
+    $now: Number() from new java.lang.Long(System.currentTimeMillis())
+    $events: List() from collect(
+        ActivityEvent(
+            sessionId == $sid,
+            activityType == ActivityType.WORK,
+            activityDuration >= 60,
+            startTimestamp >= ($now.longValue() - 3*60*60*1000) // proverava Level 1 interval
+        )
+    )
+    eval($events.size() == 0) // Level 1 nije zadovoljen
+then
+    insert(new WorkloadCheck($sid, 2));
+    System.out.println("[Workload L2 Trigger] Level 1 not satisfied, checking Level 2 for session " + $sid);
+end
+
+rule "Workload Level 2 Recommendation"
+when
+    $check: WorkloadCheck($sid: sessionId, level == 2)
+    $h: WorkloadHypothesis(sessionId == $sid, confirmed == false)
+    $now: Number() from new java.lang.Long(System.currentTimeMillis())
+    $events: List() from collect(
+        ActivityEvent(
+            sessionId == $sid,
+            activityType == ActivityType.WORK,
+            activityDuration >= 60,
+            startTimestamp >= ($now.longValue() - 6*60*60*1000) // poslednjih 6 sati
+        )
+    )
+    eval($events.size() >= 1)
+then
+    modify($h) { setConfirmed(true) }
+    insert(new Recommendation($sid, "Take a longer break, consider splitting work sessions."));
+    System.out.println("[Workload L2] Recommendation issued for session " + $sid);
+end

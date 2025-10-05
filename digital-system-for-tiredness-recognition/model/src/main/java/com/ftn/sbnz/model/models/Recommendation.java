@@ -1,40 +1,30 @@
 package com.ftn.sbnz.model.models;
 
-import com.ftn.sbnz.model.enums.RecommendationType;
-
-import java.time.LocalDateTime;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 public class Recommendation {
 
-    private Long id;
     private Long sessionId;
-    private RecommendationType type;
     private String message;
-    private int priority; // 1 = highest, 5 = lowest
-    private LocalDateTime createdAt;
-    private boolean isRead;
+    private TirednessRisk riskLevel;
+
 
     public Recommendation() {
-        this.createdAt = LocalDateTime.now();
-        this.isRead = false;
     }
 
-    public Recommendation(Long sessionId, RecommendationType type, String message, int priority) {
+    public Recommendation(Long sessionId, String message) {
         this.sessionId = sessionId;
-        this.type = type;
         this.message = message;
-        this.priority = priority;
-        this.createdAt = LocalDateTime.now();
-        this.isRead = false;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
+    public Recommendation(Long sessionId, String message, TirednessRisk riskLevel) {
+        this.sessionId = sessionId;
+        this.message = message;
+        this.riskLevel = riskLevel;
     }
 
     public Long getSessionId() {
@@ -45,14 +35,6 @@ public class Recommendation {
         this.sessionId = sessionId;
     }
 
-    public RecommendationType getType() {
-        return type;
-    }
-
-    public void setType(RecommendationType type) {
-        this.type = type;
-    }
-
     public String getMessage() {
         return message;
     }
@@ -61,27 +43,21 @@ public class Recommendation {
         this.message = message;
     }
 
-    public int getPriority() {
-        return priority;
+    public TirednessRisk getRiskLevel() {
+        return riskLevel;
     }
 
-    public void setPriority(int priority) {
-        this.priority = priority;
+    public void setRiskLevel(TirednessRisk riskLevel) {
+        this.riskLevel = riskLevel;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public boolean isRead() {
-        return isRead;
-    }
-
-    public void setRead(boolean read) {
-        isRead = read;
+    // Optional: toString method for easier debugging
+    @Override
+    public String toString() {
+        return "Recommendation{" +
+                "sessionId=" + sessionId +
+                ", message='" + message + '\'' +
+                ", riskLevel=" + riskLevel +
+                '}';
     }
 }
