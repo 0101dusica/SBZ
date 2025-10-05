@@ -14,8 +14,6 @@ export interface ActivityEvent {
   breakDuration: number;
   typingSpeed: number;
   errors: number;
-  category: string;
-  mouseMovements: number;
 }
 
 export interface Session {
@@ -23,9 +21,6 @@ export interface Session {
   userId: number;
   startTimestamp: number;
   endTimestamp: number;
-  subjectiveTirednessLevel: number;
-  risks: string[];
-  riskLevel: number;
   activityEvents: ActivityEvent[];
 }
 
@@ -77,9 +72,7 @@ export class TirednessService {
       activityDuration: event.activityDuration,
       breakDuration: event.breakDuration || 0,
       typingSpeed: event.typingSpeed,
-      errors: event.errors,
-      category: event.activityType,
-      mouseMovements: 0
+      errors: event.errors
     };
 
     return this.http.post<Recommendation[]>(`${this.apiUrl}/add-event`, activityEvent);

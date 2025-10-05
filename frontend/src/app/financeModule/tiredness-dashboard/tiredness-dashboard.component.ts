@@ -826,10 +826,10 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
       deviceType: this.newActivity.deviceType as 'COMPUTING_DEVICE' | 'PHONE_DEVICE',
       startTimestamp: startTimestamp,
       endTimestamp: endTimestamp,
-      activityDuration: this.newActivity.activityDuration!,
-      breakDuration: this.newActivity.breakDuration || 0,
-      typingSpeed: this.newActivity.typingSpeed!,
-      errors: this.newActivity.errors!
+      activityDuration: Number(this.newActivity.activityDuration!),
+      breakDuration: Number(this.newActivity.breakDuration || 0),
+      typingSpeed: Number(this.newActivity.typingSpeed!),
+      errors: Number(this.newActivity.errors!)
     };
 
     this.tirednessService.addEvent(activityRequest).subscribe({
@@ -941,9 +941,6 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
       userId: this.currentUserId,
       startTimestamp: Date.now(),
       endTimestamp: 0,
-      subjectiveTirednessLevel: 0,
-      risks: [],
-      riskLevel: 0,
       activityEvents: []
     };
     const sessionDTO: SessionDTO = {
@@ -966,20 +963,25 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
   startNewSession() {
     this.isStartingSession = true;
-    // First end current session
-    this.tirednessService.endSession().subscribe({
-      next: () => {
-        // Then start new session
-        this.currentSessionId++;
-        localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
-        localStorage.setItem('tiredness_isSessionActive', 'true');
-        this.startSession();
-      },
-      error: (err) => {
-        console.error('Error ending session:', err);
-        this.isStartingSession = false;
-      }
-    });
+    // this.tirednessService.endSession().subscribe({
+    //   next: () => {
+    //     // Then start new session
+    //     this.currentSessionId++;
+    //     localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
+    //     localStorage.setItem('tiredness_isSessionActive', 'true');
+    //     this.startSession();
+    //   },
+    //   error: (err) => {
+    //     console.error('Error ending session:', err);
+    //     this.isStartingSession = false;
+    //   }
+    // });
+    // Umesto toga, samo inkrementiraj sessionId i pokreni novu sesiju
+    this.currentSessionId++;
+    localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
+    localStorage.setItem('tiredness_isSessionActive', 'true');
+    this.startSession();
+    this.isStartingSession = false;
   }
 
   ngOnDestroy() {

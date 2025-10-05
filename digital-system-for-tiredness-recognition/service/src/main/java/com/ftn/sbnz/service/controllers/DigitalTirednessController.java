@@ -32,13 +32,16 @@ public class DigitalTirednessController {
     // add new event in one session
     @PostMapping("/add-event")
     public List<Recommendation> processEvent(@RequestBody ActivityEvent event) {
+        System.out.println(event.sessionId);
         return tirednessService.processEvent(event);
     }
 
     @GetMapping("/current-session/{sessionId}")
-    public SessionDTO getSession(@PathVariable long sessionId) {
-        return null;
-//        return tirednessService.getRecommendationsForSession(sessionId);
+    public Session getSession(@PathVariable Long sessionId) {
+        System.out.println("Fetching session with ID: " + sessionId);
+        Session session = tirednessService.getSessionById(sessionId);
+        System.out.println("Session fetched: " + session);
+        return session;
     }
 
     @GetMapping("/session-recommendations/{sessionId}")

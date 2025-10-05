@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -42,7 +43,17 @@ public class TirednessService {
 
     public void initSessions(List<Session> sessions) {
         for (Session session : sessions) {
+            System.out.println("Inserting session: " + session.getSessionId() +
+                    " for user: " + session.getUserId() +
+                    " with mainKieSession: " + mainKieSession);
             mainKieSession.insert(session);
+            System.out.println("Session: " + mainKieSession.getObjects(obj -> obj instanceof Session)
+                    .stream()
+                    .map(obj -> (Session) obj)
+                    .filter(session1 -> session1.getSessionId() == 11)
+                    .findFirst()
+                    .orElse(null)
+            );
 
             for (ActivityEvent activityEvent : session.getActivityEvents()) {
                 insertDerivedEvents(activityEvent);
@@ -64,7 +75,17 @@ public class TirednessService {
         mainKieSession.fireAllRules();
     }
 
+    public Session getSessionById(Long sessionId) {
+        return mainKieSession.getObjects(obj -> obj instanceof Session)
+                .stream()
+                .map(obj -> (Session) obj)
+                .filter(session -> Objects.equals(session.getSessionId(), sessionId))
+                .findFirst()
+                .orElse(null);
+    }
+
     public List<Recommendation> processEvent(ActivityEvent event) {
+        mainKieSession.insert(event);
         insertDerivedEvents(event);
 
         cepKieSession.fireAllRules();
