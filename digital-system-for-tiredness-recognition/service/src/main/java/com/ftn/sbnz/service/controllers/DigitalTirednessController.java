@@ -38,10 +38,7 @@ public class DigitalTirednessController {
 
     @GetMapping("/current-session/{sessionId}")
     public Session getSession(@PathVariable Long sessionId) {
-        System.out.println("Fetching session with ID: " + sessionId);
-        Session session = tirednessService.getSessionById(sessionId);
-        System.out.println("Session fetched: " + session);
-        return session;
+        return tirednessService.getSessionById(sessionId);
     }
 
     @GetMapping("/session-recommendations/{sessionId}")

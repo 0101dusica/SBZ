@@ -79,13 +79,18 @@ public class TirednessService {
         return mainKieSession.getObjects(obj -> obj instanceof Session)
                 .stream()
                 .map(obj -> (Session) obj)
-                .filter(session -> Objects.equals(session.getSessionId(), sessionId))
+                .filter(session -> session.getSessionId() == sessionId)
                 .findFirst()
                 .orElse(null);
     }
 
+
     public List<Recommendation> processEvent(ActivityEvent event) {
-        mainKieSession.insert(event);
+        Session session = getSessionById(event.getSessionId());
+        if (session != null) {
+            session.getActivityEvents().add(event);
+            mainKieSession.update(mainKieSession.getFactHandle(session), session);
+        }
         insertDerivedEvents(event);
 
         cepKieSession.fireAllRules();
