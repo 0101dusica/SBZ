@@ -6,6 +6,7 @@ import com.ftn.sbnz.model.events.ActivityEvent;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
 import com.ftn.sbnz.service.services.TirednessService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class DigitalTirednessController {
     // add new event in one session
     @PostMapping("/add-event")
     public List<Recommendation> processEvent(@RequestBody ActivityEvent event) {
+        System.out.println(event.sessionId);
         return tirednessService.processEvent(event);
     }
 
@@ -44,10 +46,10 @@ public class DigitalTirednessController {
         return tirednessService.getRecommendationsForSession(sessionId);
     }
 
-    @GetMapping("/user-recommendations/{userId}")
+    @GetMapping("/recommendations/user/{userId}")
     public List<Recommendation> getRecommendationsForUser(@PathVariable long userId) {
-        return null;
-//        return tirednessService.getRecommendationsForSession(userId);
+        return java.util.Collections.emptyList();
+        // return tirednessService.getRecommendationsForSession(userId);
     }
 
     @PostMapping("/report-tiredness")
@@ -60,5 +62,17 @@ public class DigitalTirednessController {
     @PostMapping("/end-session")
     public String endSession(){
         return tirednessService.endSession();
+    }
+
+    @PostMapping("/submit-tiredness-level/{sessionId}")
+    public ResponseEntity<Void> submitTirednessLevel(@PathVariable long sessionId, @RequestBody int level) {
+        // TODO: implement logic
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/activities/{sessionId}")
+    public List<ActivityEvent> getActivitiesForSession(@PathVariable long sessionId) {
+        // TODO: implement logic to return activities for session
+        return java.util.Collections.emptyList();
     }
 }

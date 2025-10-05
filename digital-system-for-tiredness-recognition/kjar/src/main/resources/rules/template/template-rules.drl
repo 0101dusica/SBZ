@@ -1,0 +1,81 @@
+package rules.template;
+dialect  "mvel"
+
+import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.Template;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+
+declare ActivityEvent
+    @role(event)
+    @timestamp(startTimestamp)
+end
+
+// Template-aware pravila
+rule "Template - Work break threshold"
+when
+    $template: Template($userId: userId, $workThreshold: workBreakThreshold, enableLevel3Action == true)
+    $session: Session(userId == $userId, $sessionId: sessionId)
+    $workEvent: ActivityEvent(sessionId == $sessionId, activityType == ActivityType.WORK, activityDuration >= $workThreshold)
+    not( Recommendation(sessionId == $sessionId, riskLevel == TirednessRisk.MEDIUM, message.contains("rad")) )
+then
+    System.out.println("Template rule triggered: Work break for user " + $userId + " threshold: " + $workThreshold + " actual: " + $workEvent.getActivityDuration());
+    insert(new Recommendation(
+        $sessionId,
+        "Radite već " + $workEvent.getActivityDuration() + " minuta. Vreme je za pauzu! (prag: " + $workThreshold + " min)",
+        TirednessRisk.MEDIUM
+    ));
+end
+
+rule "Template - Entertainment threshold"
+when
+    $template: Template($userId: userId, $entertainmentThreshold: entertainmentThreshold, enableLevel2Action == true)
+    $session: Session(userId == $userId, $sessionId: sessionId)
+    $entertainmentEvent: ActivityEvent(sessionId == $sessionId, activityType == ActivityType.ENTERTAINMENT, activityDuration >= $entertainmentThreshold)
+    not( Recommendation(sessionId == $sessionId, riskLevel == TirednessRisk.LOW, message.contains("zabava")) )
+then
+    System.out.println("Template rule triggered: Entertainment break for user " + $userId + " threshold: " + $entertainmentThreshold + " actual: " + $entertainmentEvent.getActivityDuration());
+    insert(new Recommendation(
+        $sessionId,
+        "Proveđeno je " + $entertainmentEvent.getActivityDuration() + " min na zabavi. Probajte aktivniji odmor! (prag: " + $entertainmentThreshold + " min)",
+        TirednessRisk.LOW
+    ));
+end
+
+rule "Template - High fatigue for level 4"
+when
+    $template: Template($userId: userId, enableLevel4Action == true)
+    $session: Session(userId == $userId, $sessionId: sessionId)
+    $totalWork: Number(intValue >= 200) from accumulate(
+        ActivityEvent(sessionId == $sessionId, activityType == ActivityType.WORK, $duration: activityDuration),
+        sum($duration)
+    )
+    not( Recommendation(sessionId == $sessionId, riskLevel == TirednessRisk.HIGH, message.contains("ukupno")) )
+then
+    System.out.println("Template rule triggered: High fatigue for user " + $userId + " total work: " + $totalWork);
+    insert(new Recommendation(
+        $sessionId,
+        "Ukupno ste radili " + $totalWork + " minuta. Potrebna je duža pauza od 20-30 minuta!",
+        TirednessRisk.HIGH
+    ));
+end
+
+rule "Template - Critical fatigue for level 5"
+when
+    $template: Template($userId: userId, enableLevel5Action == true)
+    $session: Session(userId == $userId, $sessionId: sessionId)
+    $totalTime: Number(intValue >= 400) from accumulate(
+        ActivityEvent(sessionId == $sessionId, $duration: activityDuration),
+        sum($duration)
+    )
+    not( Recommendation(sessionId == $sessionId, riskLevel == TirednessRisk.HIGH, message.contains("kritično")) )
+then
+    System.out.println("Template rule triggered: Critical fatigue for user " + $userId + " total time: " + $totalTime);
+    insert(new Recommendation(
+        $sessionId,
+        "KRITIČNO: Ukupno vreme pred ekranom " + $totalTime + " min. Obavezna pauza minimum 45 minuta!",
+        TirednessRisk.HIGH
+    ));
+end
