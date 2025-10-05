@@ -45,6 +45,7 @@ public class TirednessService {
             mainKieSession.insert(session);
 
             for (ActivityEvent activityEvent : session.getActivityEvents()) {
+                backwardKieSession.insert(activityEvent);
                 insertDerivedEvents(activityEvent);
             }
         }
@@ -169,17 +170,7 @@ public class TirednessService {
 
     public Recommendation backwardChaining(TirednessReportDTO report) {
         backwardKieSession.insert(report);
-
-        List<ActivityEvent> events = mainKieSession.getObjects(obj -> obj instanceof Session)
-                .stream()
-                .map(obj -> (Session) obj)
-                .filter(s -> s.getSessionId() == report.sessionId)
-                .flatMap(s -> s.getActivityEvents().stream())
-                .collect(Collectors.toList());
-
-        for (ActivityEvent event : events) {
-            backwardKieSession.insert(event);
-        }
+        backwardKieSession.fireAllRules();
 
         backwardKieSession.fireAllRules();
 

@@ -5,7 +5,7 @@ import com.ftn.sbnz.model.models.enums.DeviceType;
 
 public class ActivityEvent {
     public long id;
-    public long sessionId;
+    public Long sessionId;
     public ActivityType activityType;
     public DeviceType deviceType;
     public long startTimestamp;
@@ -18,7 +18,7 @@ public class ActivityEvent {
 
     public ActivityEvent() {}
 
-    public ActivityEvent(long id, long sessionId, ActivityType activityType, DeviceType deviceType,
+    public ActivityEvent(long id, Long sessionId, ActivityType activityType, DeviceType deviceType,
                          long startTimestamp, long endTimestamp, int activityDuration, int breakDuration,
                          int typingSpeed, int errors, String category) {
         this.id = id;
@@ -37,8 +37,8 @@ public class ActivityEvent {
     // Getteri i setteri
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
-    public long getSessionId() { return sessionId; }
-    public void setSessionId(long sessionId) { this.sessionId = sessionId; }
+    public Long getSessionId() { return sessionId; }
+    public void setSessionId(Long sessionId) { this.sessionId = sessionId; }
     public ActivityType getActivityType() { return activityType; }
     public void setActivityType(ActivityType activityType) { this.activityType = activityType; }
     public DeviceType getDeviceType() { return deviceType; }
