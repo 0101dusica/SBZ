@@ -1,3 +1,5 @@
+// ...existing imports and interfaces...
+// (remove this duplicate class declaration)
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -11,6 +13,16 @@ interface TimeData {
   totalTime: { hours: number, minutes: number };
   workTime: { hours: number, minutes: number };
   entertainmentTime: { hours: number, minutes: number };
+}
+
+interface ActivityForm {
+  activityType: 'WORK' | 'ENTERTAINMENT' | '';
+  deviceType: 'COMPUTING_DEVICE' | 'PHONE_DEVICE' | '';
+  startTime: string;
+  activityDuration: number | null;
+  breakDuration: number | null;
+  typingSpeed: number | null;
+  errors: number | null;
 }
 
 @Component({
@@ -98,26 +110,111 @@ interface TimeData {
           <!-- Activity Input Form -->
           <div class="activity-form-card">
             <h3>Dodaj aktivnost</h3>
+            
+            <!-- Activity Type Toggle -->
             <div class="form-group">
               <label>Tip aktivnosti</label>
-              <select [(ngModel)]="newActivity.category" class="form-select" [disabled]="!isSessionActive">
-                <option value="">Izaberi aktivnost</option>
-                <option value="activityDuration">Activity Duration</option>
-                <option value="breakDuration">Break Duration</option>
-                <option value="typingSpeed">Typing Speed</option>
-                <option value="errors">Errors</option>
-              </select>
+              <div class="toggle-buttons">
+                <button 
+                  type="button"
+                  class="toggle-btn"
+                  [class.active]="newActivity.activityType === 'WORK'"
+                  [disabled]="!isSessionActive"
+                  (click)="newActivity.activityType = 'WORK'">
+                  Rad
+                </button>
+                <button 
+                  type="button"
+                  class="toggle-btn"
+                  [class.active]="newActivity.activityType === 'ENTERTAINMENT'"
+                  [disabled]="!isSessionActive"
+                  (click)="newActivity.activityType = 'ENTERTAINMENT'">
+                  Zabava
+                </button>
+              </div>
             </div>
+
+            <!-- Device Type Toggle -->
+            <div class="form-group">
+              <label>Uređaj</label>
+              <div class="toggle-buttons">
+                <button 
+                  type="button"
+                  class="toggle-btn"
+                  [class.active]="newActivity.deviceType === 'COMPUTING_DEVICE'"
+                  [disabled]="!isSessionActive"
+                  (click)="newActivity.deviceType = 'COMPUTING_DEVICE'">
+                  Računar
+                </button>
+                <button 
+                  type="button"
+                  class="toggle-btn"
+                  [class.active]="newActivity.deviceType === 'PHONE_DEVICE'"
+                  [disabled]="!isSessionActive"
+                  (click)="newActivity.deviceType = 'PHONE_DEVICE'">
+                  Telefon
+                </button>
+              </div>
+            </div>
+
+            <!-- Start Time -->
             <div class="form-group">
               <app-input-field
-                label="Vreme (minuti)"
-                type="number"
-                [(ngModel)]="newActivity.duration"
-                placeholder="Unesite vreme u minutama"
-                [min]="0"
+                label="Vreme početka"
+                type="datetime-local"
+                [(ngModel)]="newActivity.startTime"
                 [disabled]="!isSessionActive">
               </app-input-field>
             </div>
+
+            <!-- Duration Fields -->
+            <div class="form-row">
+              <div class="form-group">
+                <app-input-field
+                  label="Trajanje aktivnosti (min)"
+                  type="number"
+                  [(ngModel)]="newActivity.activityDuration"
+                  placeholder="Minuti"
+                  [min]="1"
+                  [disabled]="!isSessionActive">
+                </app-input-field>
+              </div>
+              <div class="form-group">
+                <app-input-field
+                  label="Trajanje pauze (min)"
+                  type="number"
+                  [(ngModel)]="newActivity.breakDuration"
+                  placeholder="Minuti"
+                  [min]="0"
+                  [disabled]="!isSessionActive">
+                </app-input-field>
+              </div>
+            </div>
+
+            <!-- Performance Fields -->
+            <div class="form-row">
+              <div class="form-group">
+                <app-input-field
+                  label="Brzina kucanja (WPM)"
+                  type="number"
+                  [(ngModel)]="newActivity.typingSpeed"
+                  placeholder="Reči po minuti"
+                  [min]="0"
+                  [disabled]="!isSessionActive">
+                </app-input-field>
+              </div>
+              <div class="form-group">
+                <app-input-field
+                  label="Broj grešaka"
+                  type="number"
+                  [(ngModel)]="newActivity.errors"
+                  placeholder="Greške"
+                  [min]="0"
+                  [disabled]="!isSessionActive">
+                </app-input-field>
+              </div>
+            </div>
+
             <div class="button-center">
               <app-button 
                 (click)="addActivity()"
@@ -136,6 +233,38 @@ interface TimeData {
             <h3>24h pregled</h3>
             <div class="chart-container">
               <canvas #pieChart></canvas>
+            </div>
+          </div>
+
+          <!-- Activities History -->
+          <div class="activities-card">
+            <div class="activities-header-fixed">
+              <h3>Aktivnosti u sesiji</h3>
+            </div>
+            <div class="activities-list-scroll">
+              <div *ngIf="isSessionActive && activities.length > 0; else noActivities" class="activities-list">
+                <div *ngFor="let act of activities" class="activity-item">
+                  <div class="activity-header">
+                    <span class="activity-type" [ngClass]="{'work': act.activityType === 'WORK', 'entertainment': act.activityType === 'ENTERTAINMENT'}">
+                      {{ act.activityType === 'WORK' ? 'Rad' : 'Zabava' }}
+                    </span>
+                    <span class="device-type">({{ act.deviceType === 'COMPUTING_DEVICE' ? 'Računar' : 'Telefon' }})</span>
+                    <span class="activity-time">{{ act.startTimestamp | date:'dd.MM.yyyy HH:mm' }}</span>
+                  </div>
+                  <div class="activity-details">
+                    <span>Trajanje: {{ act.activityDuration }} min</span>
+                    <span>Pauza: {{ act.breakDuration }} min</span>
+                    <span>Brzina kucanja: {{ act.typingSpeed }} WPM</span>
+                    <span>Greške: {{ act.errors }}</span>
+                  </div>
+                </div>
+              </div>
+              <ng-template #noActivities>
+                <div class="no-activities">
+                  <p *ngIf="isSessionActive"><i>Nema aktivnosti u trenutnoj sesiji</i></p>
+                  <p *ngIf="!isSessionActive"><i>Pokrenite sesiju da biste videli aktivnosti</i></p>
+                </div>
+              </ng-template>
             </div>
           </div>
 
@@ -168,7 +297,7 @@ interface TimeData {
   styles: [`
     .tiredness-dashboard {
       padding: 1rem;
-      max-width: 1400px;
+      max-width: 1600px;
       margin: 0 auto;
     }
 
@@ -176,18 +305,18 @@ interface TimeData {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 2rem;
+      margin-bottom: 0.5rem;
+      margin-top: 0.5rem;
       background: var(--background-light);
-      padding: 1rem;
       border-radius: 12px;
     }
 
     .logo {
-      height: 40px;
+      height: 60px;
     }
 
     .logo-img {
-      height: 50px;
+      height: 60px;
     }
 
     .session-control-center {
@@ -449,16 +578,95 @@ interface TimeData {
     }
 
     .recommendations-card {
-      min-height: 460px;
+      min-height: 410px;
       height: auto;
       flex-grow: unset;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
+
+    /* Activities Card Styles */
+    .activities-card {
+      background: white;
+      border-radius: 12px;
+      padding: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      border: 1px solid var(--border-light);
+      min-height: 320px;
+      max-height: 320px;
+      margin-bottom: 0.1rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .activities-header-fixed {
+      padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+      background: white;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      z-index: 1;
+    }
+    .activities-list-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .activities-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .activity-item {
+      padding: 1rem;
+      border-radius: 8px;
+      background: #f7f7f7;
+      border-left: 4px solid #7B904B;
+      margin-bottom: 0.5rem;
+    }
+    .activity-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .activity-type.work {
+      color: #7B904B;
+    }
+    .activity-type.entertainment {
+      color: #FF9800;
+    }
+    .device-type {
+      color: #888;
+      font-size: 0.95em;
+    }
+    .activity-time {
+      margin-left: auto;
+      color: #666;
+      font-size: 0.95em;
+    }
+    .activity-details {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.97em;
+      color: #444;
+    }
+    .no-activities {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      height: 100%;
+    }
   `]
 })
 export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
+  activities: ActivityEvent[] = [];
   @ViewChild('pieChart', { static: false }) pieChartRef!: ElementRef<HTMLCanvasElement>;
   currentSessionId: number = 1; // TODO: Get from auth service or route params
   currentUserId: number = 1; // TODO: Get from auth service
@@ -475,9 +683,14 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
   selectedTirednessLevel: number | null = null;
   isSubmittingLevel: boolean = false;
 
-  newActivity = {
-    category: '',
-    duration: null as number | null
+  newActivity: ActivityForm = {
+    activityType: '',
+    deviceType: '',
+    startTime: '',
+    activityDuration: null,
+    breakDuration: null,
+    typingSpeed: null,
+    errors: null
   };
   isSubmittingActivity: boolean = false;
 
@@ -503,10 +716,23 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
           this.currentSession = sessionDTO.sessions[0];
           this.calculateTimeData();
           this.updatePieChart();
+          this.loadActivities();
         }
       },
       error: (err) => {
         console.error('Error loading session:', err);
+      }
+    });
+  }
+
+  loadActivities() {
+    this.tirednessService.getActivitiesForSession(this.currentSessionId).subscribe({
+      next: (activities) => {
+        this.activities = activities || [];
+      },
+      error: (err) => {
+        console.error('Error loading activities:', err);
+        this.activities = [];
       }
     });
   }
@@ -523,6 +749,8 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
       }
     });
   }
+// ...existing code...
+// ...existing code...
 
   calculateTimeData() {
     if (!this.currentSession) return;
@@ -576,7 +804,14 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
   }
 
   isActivityFormValid(): boolean {
-    return !!this.newActivity.category && this.newActivity.duration !== null && this.newActivity.duration > 0;
+    return !!this.newActivity.activityType && 
+           !!this.newActivity.deviceType &&
+           !!this.newActivity.startTime &&
+           this.newActivity.activityDuration !== null && 
+           this.newActivity.activityDuration > 0 &&
+           this.newActivity.breakDuration !== null &&
+           this.newActivity.typingSpeed !== null &&
+           this.newActivity.errors !== null;
   }
 
   addActivity() {
@@ -584,22 +819,34 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
     this.isSubmittingActivity = true;
 
+    // Convert datetime-local to timestamp
+    const startTimestamp = new Date(this.newActivity.startTime).getTime();
+    const endTimestamp = startTimestamp + (this.newActivity.activityDuration! * 60 * 1000);
     const activityRequest: CreateActivityEventRequest = {
+      id: Date.now(),
       sessionId: this.currentSessionId,
-      activityType: 'WORK', // Default, could be determined by category
-      deviceType: 'COMPUTING_DEVICE', // Default
-      activityDuration: this.newActivity.duration!,
-      breakDuration: 0,
-      typingSpeed: this.newActivity.category === 'typingSpeed' ? this.newActivity.duration! : 0,
-      errors: this.newActivity.category === 'errors' ? this.newActivity.duration! : 0,
-      category: this.newActivity.category,
-      mouseMovements: 0
+      activityType: this.newActivity.activityType as 'WORK' | 'ENTERTAINMENT',
+      deviceType: this.newActivity.deviceType as 'COMPUTING_DEVICE' | 'PHONE_DEVICE',
+      startTimestamp: startTimestamp,
+      endTimestamp: endTimestamp,
+      activityDuration: this.newActivity.activityDuration!,
+      breakDuration: this.newActivity.breakDuration || 0,
+      typingSpeed: this.newActivity.typingSpeed!,
+      errors: this.newActivity.errors!
     };
 
     this.tirednessService.addEvent(activityRequest).subscribe({
       next: (newRecommendations) => {
         this.isSubmittingActivity = false;
-        this.newActivity = { category: '', duration: null };
+        this.newActivity = {
+          activityType: '',
+          deviceType: '',
+          startTime: '',
+          activityDuration: null,
+          breakDuration: null,
+          typingSpeed: null,
+          errors: null
+        };
         
         // Add new recommendations to the list
         this.recommendations = [...newRecommendations, ...this.recommendations];

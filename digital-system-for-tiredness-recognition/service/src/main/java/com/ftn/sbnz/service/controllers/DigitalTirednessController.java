@@ -5,6 +5,7 @@ import com.ftn.sbnz.model.events.ActivityEvent;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
 import com.ftn.sbnz.service.services.TirednessService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -54,5 +55,17 @@ public class DigitalTirednessController {
     @PostMapping("/end-session")
     public String endSession(){
         return tirednessService.endSession();
+    }
+
+    @PostMapping("/submit-tiredness-level/{sessionId}")
+    public ResponseEntity<Void> submitTirednessLevel(@PathVariable long sessionId, @RequestBody int level) {
+        // TODO: implement logic
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/activities/{sessionId}")
+    public List<ActivityEvent> getActivitiesForSession(@PathVariable long sessionId) {
+        // TODO: implement logic to return activities for session
+        return java.util.Collections.emptyList();
     }
 }
