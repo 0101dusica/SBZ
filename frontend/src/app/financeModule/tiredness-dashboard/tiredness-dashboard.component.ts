@@ -668,9 +668,8 @@ interface ActivityForm {
 export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   activities: ActivityEvent[] = [];
   @ViewChild('pieChart', { static: false }) pieChartRef!: ElementRef<HTMLCanvasElement>;
-  currentSessionId: number = 1; // TODO: Get from auth service or route params
-  currentUserId: number = 1; // TODO: Get from auth service
-
+  currentSessionId: number = 1;
+  currentUserId: number = 1;
   isSessionActive: boolean = false;
   isStartingSession: boolean = false;
 
@@ -702,7 +701,26 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
   constructor(private tirednessService: TirednessService) {}
 
   ngOnInit() {
-    // Don't auto-load session data - wait for user to start session
+    // Restore session/user state from localStorage
+    const storedUserId = localStorage.getItem('tiredness_userId');
+    const storedSessionId = localStorage.getItem('tiredness_sessionId');
+    const storedSessionActive = localStorage.getItem('tiredness_isSessionActive');
+    if (storedUserId) {
+      this.currentUserId = parseInt(storedUserId, 10);
+    } else {
+      // Generate a random userId and store it
+      this.currentUserId = Math.floor(Math.random() * 1000000) + 1;
+      localStorage.setItem('tiredness_userId', this.currentUserId.toString());
+    }
+    if (storedSessionId) {
+      this.currentSessionId = parseInt(storedSessionId, 10);
+    }
+    if (storedSessionActive) {
+      this.isSessionActive = storedSessionActive === 'true';
+    }
+    if (this.isSessionActive) {
+      this.loadCurrentSession();
+    }
   }
 
   ngAfterViewInit() {
@@ -714,9 +732,11 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
       next: (sessionDTO) => {
         if (sessionDTO.sessions.length > 0) {
           this.currentSession = sessionDTO.sessions[0];
+          // Osveži aktivnosti iz sesije
+          this.activities = this.currentSession.activityEvents || [];
+          // (Preporuke se više ne osvežavaju iz sesije, backend Session nema to polje)
           this.calculateTimeData();
           this.updatePieChart();
-          this.loadActivities();
         }
       },
       error: (err) => {
@@ -725,30 +745,7 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     });
   }
 
-  loadActivities() {
-    this.tirednessService.getActivitiesForSession(this.currentSessionId).subscribe({
-      next: (activities) => {
-        this.activities = activities || [];
-      },
-      error: (err) => {
-        console.error('Error loading activities:', err);
-        this.activities = [];
-      }
-    });
-  }
-
-  loadRecommendations() {
-    this.tirednessService.getRecommendationsForUser(this.currentUserId).subscribe({
-      next: (recommendations) => {
-        // Backend returns null for now, so handle empty recommendations
-        this.recommendations = recommendations || [];
-      },
-      error: (err) => {
-        console.error('Error loading recommendations:', err);
-        this.recommendations = [];
-      }
-    });
-  }
+  // loadActivities and loadRecommendations više nisu potrebni
 // ...existing code...
 // ...existing code...
 
@@ -836,7 +833,7 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     };
 
     this.tirednessService.addEvent(activityRequest).subscribe({
-      next: (newRecommendations) => {
+      next: () => {
         this.isSubmittingActivity = false;
         this.newActivity = {
           activityType: '',
@@ -847,11 +844,7 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
           typingSpeed: null,
           errors: null
         };
-        
-        // Add new recommendations to the list
-        this.recommendations = [...newRecommendations, ...this.recommendations];
-        
-        // Reload session data
+        // Sada samo refresuj celu sesiju
         this.loadCurrentSession();
       },
       error: (err) => {
@@ -942,7 +935,6 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
   startSession() {
     this.isStartingSession = true;
-    
     // Create a sample session
     const sampleSession: Session = {
       sessionId: this.currentSessionId,
@@ -954,17 +946,16 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
       riskLevel: 0,
       activityEvents: []
     };
-
     const sessionDTO: SessionDTO = {
       sessions: [sampleSession]
     };
-
     this.tirednessService.initSession(sessionDTO).subscribe({
       next: () => {
         this.isSessionActive = true;
+        localStorage.setItem('tiredness_isSessionActive', 'true');
+        localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
         this.isStartingSession = false;
         this.loadCurrentSession();
-        this.loadRecommendations();
       },
       error: (err) => {
         console.error('Error starting session:', err);
@@ -975,12 +966,13 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
   startNewSession() {
     this.isStartingSession = true;
-    
     // First end current session
     this.tirednessService.endSession().subscribe({
       next: () => {
         // Then start new session
-        this.currentSessionId++; // Increment session ID
+        this.currentSessionId++;
+        localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
+        localStorage.setItem('tiredness_isSessionActive', 'true');
         this.startSession();
       },
       error: (err) => {
@@ -994,5 +986,6 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     if (this.pieChart) {
       this.pieChart.destroy();
     }
+    // Optionally, persist state on destroy (not strictly needed with localStorage on every change)
   }
 }
