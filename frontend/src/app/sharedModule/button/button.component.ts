@@ -10,7 +10,7 @@ import { RouterModule } from '@angular/router';
   styleUrls: ['./button.component.scss']
 })
 export class ButtonComponent {
-  @Input() label: string = 'Submit';
+  @Input() label: string = '';
   @Input() variant: 'primary' | 'outline' | 'icon' = 'primary';
   @Input() size: 'small' | 'medium' | 'large' = 'medium';
   @Input() loading: boolean = false;
