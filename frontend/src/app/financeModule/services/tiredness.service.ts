@@ -34,6 +34,7 @@ export interface Recommendation {
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 }
 
+
 export interface CreateActivityEventRequest {
   id: number;
   sessionId: number;
@@ -45,6 +46,11 @@ export interface CreateActivityEventRequest {
   breakDuration?: number;
   typingSpeed: number;
   errors: number;
+}
+
+export interface TirednessReportRequest {
+  sessionId: number;
+  subjectiveTirednessLevel: number;
 }
 
 @Injectable({
@@ -79,13 +85,15 @@ export class TirednessService {
   }
 
   // Get current session
-  getCurrentSession(sessionId: number): Observable<SessionDTO> {
-    return this.http.get<SessionDTO>(`${this.apiUrl}/current-session/${sessionId}`);
+  getCurrentSession(sessionId: number): Observable<Session> {
+    return this.http.get<Session>(`${this.apiUrl}/current-session/${sessionId}`);
   }
 
   // Get recommendations for session
   getRecommendationsForSession(sessionId: number): Observable<Recommendation[]> {
-    return this.http.get<Recommendation[]>(`${this.apiUrl}/recommendations/${sessionId}`);
+    const url = `${this.apiUrl}/session-recommendations/${sessionId}`;
+    console.log('Calling recommendations URL:', url);
+    return this.http.get<Recommendation[]>(url);
   }
 
   // Get recommendations for user
@@ -93,9 +101,14 @@ export class TirednessService {
     return this.http.get<Recommendation[]>(`${this.apiUrl}/recommendations/user/${userId}`);
   }
 
-  // Submit tiredness level
-  submitTirednessLevel(sessionId: number, level: number): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/submit-tiredness-level/${sessionId}`, level);
+
+  // Submit tiredness level (new: POST /report-tiredness)
+  reportTirednessLevel(sessionId: number, level: number): Observable<any> {
+    const body: TirednessReportRequest = {
+      sessionId,
+      subjectiveTirednessLevel: level
+    };
+    return this.http.post<any>(`${this.apiUrl}/report-tiredness`, body);
   }
 
   // End session

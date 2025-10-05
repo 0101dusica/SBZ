@@ -1,0 +1,51 @@
+{
+  "sessions": [
+    {
+      "sessionId": 46621,
+      "userId": 100,
+      "startTimestamp": 1759650000000,
+      "endTimestamp": 1759657200000,
+      "activityEvents": [
+        {
+          "id": 4,
+          "sessionId": 46621,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759653000000,
+          "endTimestamp": 1759653300000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 0,
+          "errors": 0,
+          "category": "SOCIAL"
+        },
+        {
+          "id": 5,
+          "sessionId": 46621,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759653400000,
+          "endTimestamp": 1759653800000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 0,
+          "errors": 0,
+          "category": "SOCIAL"
+        },
+        {
+          "id": 6,
+          "sessionId": 46621,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759653900000,
+          "endTimestamp": 1759654300000,
+          "activityDuration": 35,
+          "breakDuration": 0,
+          "typingSpeed": 0,
+          "errors": 0,
+          "category": "SOCIAL"
+        }
+      ]
+    }
+  ]
+}

@@ -82,6 +82,21 @@ interface ActivityForm {
                 class="wide-btn">
               </app-button>
             </div>
+
+            <!-- Simulation Control -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+              <select [(ngModel)]="selectedSimulation" style="flex: 1; padding: 0.5rem; border-radius: 6px; border: 1px solid var(--border-light);">
+                <option [ngValue]="null" disabled selected>Izaberi simulaciju</option>
+                <option *ngFor="let sim of simulationFiles" [ngValue]="sim.value">{{ sim.label }}</option>
+              </select>
+              <app-button 
+                (click)="runSimulation()" 
+                [label]="'Pokreni simulaciju'" 
+                [disabled]="!selectedSimulation"
+                variant="outline"
+                style="white-space: nowrap;">
+              </app-button>
+            </div>
           </div>
 
           <!-- Tiredness Level Input -->
@@ -242,6 +257,7 @@ interface ActivityForm {
               <h3>Aktivnosti u sesiji</h3>
             </div>
             <div class="activities-list-scroll">
+
               <div *ngIf="isSessionActive && activities.length > 0; else noActivities" class="activities-list">
                 <div *ngFor="let act of activities" class="activity-item">
                   <div class="activity-header">
@@ -696,6 +712,18 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
   recommendations: Recommendation[] = [];
   currentSession: Session | null = null;
 
+  // Simulation properties
+  simulationFiles = [
+    { label: 'Rani umor', value: 'early-fatigue.json' },
+    { label: 'Mentalni umor', value: 'mental-fatigue.json' },
+    { label: 'Mešovito', value: 'mix.json' },
+    { label: 'Visok rizik', value: 'high-risk.json' },
+    { label: 'Uzrok: Multitasking', value: 'multitasking-cause.json' },
+    { label: 'Uzrok: Pasivno korišćenje', value: 'passive-use-cause.json' },
+    { label: 'Uzrok: Opterećenje poslom', value: 'workload-cause.json' }
+  ];
+  selectedSimulation: string | null = null;
+
   private pieChart: Chart | null = null;
 
   constructor(private tirednessService: TirednessService) {}
@@ -729,15 +757,21 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
   loadCurrentSession() {
     this.tirednessService.getCurrentSession(this.currentSessionId).subscribe({
-      next: (sessionDTO) => {
-        if (sessionDTO.sessions.length > 0) {
-          this.currentSession = sessionDTO.sessions[0];
-          // Osveži aktivnosti iz sesije
-          this.activities = this.currentSession.activityEvents || [];
-          // (Preporuke se više ne osvežavaju iz sesije, backend Session nema to polje)
-          this.calculateTimeData();
-          this.updatePieChart();
-        }
+      next: (sessionObj) => {
+        console.log('SESSION RESPONSE:', sessionObj);
+        this.currentSession = sessionObj;
+        const events = (this.currentSession && Array.isArray(this.currentSession.activityEvents)) ? this.currentSession.activityEvents : [];
+        this.activities = events
+          .filter(act => act && typeof act === 'object')
+          .map(({ id, sessionId, activityType, deviceType, startTimestamp, endTimestamp, activityDuration, breakDuration, typingSpeed, errors }) => ({
+            id, sessionId, activityType, deviceType, startTimestamp, endTimestamp, activityDuration, breakDuration, typingSpeed, errors
+          }));
+        console.log('ACTIVITIES PARSED:', this.activities);
+        this.calculateTimeData();
+        this.updatePieChart();
+        
+        // Load recommendations for this session
+        this.loadRecommendations();
       },
       error: (err) => {
         console.error('Error loading session:', err);
@@ -745,9 +779,20 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     });
   }
 
-  // loadActivities and loadRecommendations više nisu potrebni
-// ...existing code...
-// ...existing code...
+  loadRecommendations() {
+    console.log('Loading recommendations for sessionId:', this.currentSessionId);
+    this.tirednessService.getRecommendationsForSession(this.currentSessionId).subscribe({
+      next: (recommendations) => {
+        console.log('RECOMMENDATIONS LOADED:', recommendations);
+        console.log('Number of recommendations:', recommendations?.length || 0);
+        this.recommendations = recommendations || [];
+      },
+      error: (err) => {
+        console.error('Error loading recommendations for sessionId:', this.currentSessionId, err);
+        this.recommendations = [];
+      }
+    });
+  }
 
   calculateTimeData() {
     if (!this.currentSession) return;
@@ -772,6 +817,29 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     };
   }
 
+  calculateTimeDataFromActivities() {
+    let totalWorkMinutes = 0;
+    let totalEntertainmentMinutes = 0;
+
+    this.activities.forEach(event => {
+      if (event.activityType === 'WORK') {
+        totalWorkMinutes += event.activityDuration;
+      } else if (event.activityType === 'ENTERTAINMENT') {
+        totalEntertainmentMinutes += event.activityDuration;
+      }
+    });
+
+    const totalMinutes = totalWorkMinutes + totalEntertainmentMinutes;
+
+    this.timeData = {
+      totalTime: this.minutesToHoursMinutes(totalMinutes),
+      workTime: this.minutesToHoursMinutes(totalWorkMinutes),
+      entertainmentTime: this.minutesToHoursMinutes(totalEntertainmentMinutes)
+    };
+    
+    console.log('Time data calculated from activities:', this.timeData);
+  }
+
   private minutesToHoursMinutes(minutes: number): { hours: number, minutes: number } {
     return {
       hours: Math.floor(minutes / 60),
@@ -787,7 +855,7 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     if (!this.selectedTirednessLevel) return;
 
     this.isSubmittingLevel = true;
-    this.tirednessService.submitTirednessLevel(this.currentSessionId, this.selectedTirednessLevel).subscribe({
+    this.tirednessService.reportTirednessLevel(this.currentSessionId, this.selectedTirednessLevel).subscribe({
       next: () => {
         this.isSubmittingLevel = false;
         this.selectedTirednessLevel = null;
@@ -833,7 +901,7 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     };
 
     this.tirednessService.addEvent(activityRequest).subscribe({
-      next: () => {
+      next: (recommendations) => {
         this.isSubmittingActivity = false;
         this.newActivity = {
           activityType: '',
@@ -844,7 +912,13 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
           typingSpeed: null,
           errors: null
         };
-        // Sada samo refresuj celu sesiju
+        
+        // Update recommendations from the response
+        if (recommendations) {
+          this.recommendations = recommendations;
+        }
+        
+        // Reload session to get updated activities
         this.loadCurrentSession();
       },
       error: (err) => {
@@ -982,6 +1056,65 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     localStorage.setItem('tiredness_isSessionActive', 'true');
     this.startSession();
     this.isStartingSession = false;
+  }
+
+  runSimulation() {
+    if (!this.selectedSimulation) return;
+    
+    const filePath = `simulations/${this.selectedSimulation}`;
+    fetch(filePath)
+      .then(res => res.json())
+      .then(json => {
+        // Extract sessionId and activities from JSON
+        const simulationSessionId = json.sessions && json.sessions.length > 0 ? json.sessions[0].sessionId : null;
+        const simulationActivities = json.sessions && json.sessions.length > 0 ? json.sessions[0].activityEvents : [];
+        
+        console.log('Simulation JSON loaded:', {
+          sessionId: simulationSessionId,
+          activitiesCount: simulationActivities.length,
+          activities: simulationActivities
+        });
+        
+        this.tirednessService.initSession(json).subscribe({
+          next: () => {
+            if (simulationSessionId) {
+              // Set the simulation sessionId as current
+              this.currentSessionId = simulationSessionId;
+              localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
+              localStorage.setItem('tiredness_isSessionActive', 'true');
+              this.isSessionActive = true;
+              
+              // Load activities directly from JSON first
+              this.activities = simulationActivities || [];
+              console.log('Activities loaded from JSON:', this.activities);
+              
+              // Calculate time data from activities
+              this.calculateTimeDataFromActivities();
+              this.updatePieChart();
+              
+              // Also try to load from backend as backup
+              setTimeout(() => {
+                this.loadCurrentSession();
+                this.loadRecommendations();
+              }, 500);
+              
+              // Reset simulation selection
+              this.selectedSimulation = null;
+            } else {
+              // Fallback to page reload if no sessionId found
+              window.location.reload();
+            }
+          },
+          error: (err) => {
+            alert('Greška pri pokretanju simulacije!');
+            console.error('Error running simulation:', err);
+          }
+        });
+      })
+      .catch(err => {
+        alert('Ne mogu da učitam JSON fajl simulacije!');
+        console.error('Error loading simulation file:', err);
+      });
   }
 
   ngOnDestroy() {
