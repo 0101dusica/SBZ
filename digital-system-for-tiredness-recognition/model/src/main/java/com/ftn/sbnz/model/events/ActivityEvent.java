@@ -15,13 +15,12 @@ public class ActivityEvent {
     public int typingSpeed;
     public int errors;
     public String category;
-    public int mouseMovements;
 
     public ActivityEvent() {}
 
     public ActivityEvent(long id, long sessionId, ActivityType activityType, DeviceType deviceType,
                          long startTimestamp, long endTimestamp, int activityDuration, int breakDuration,
-                         int typingSpeed, int errors, String category, int mouseMovements) {
+                         int typingSpeed, int errors, String category) {
         this.id = id;
         this.sessionId = sessionId;
         this.activityType = activityType;
@@ -33,7 +32,6 @@ public class ActivityEvent {
         this.typingSpeed = typingSpeed;
         this.errors = errors;
         this.category = category;
-        this.mouseMovements = mouseMovements;
     }
 
     // Getteri i setteri
@@ -59,6 +57,4 @@ public class ActivityEvent {
     public void setErrors(int errors) { this.errors = errors; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
-    public int getMouseMovements() { return mouseMovements; }
-    public void setMouseMovements(int mouseMovements) { this.mouseMovements = mouseMovements; }
 }

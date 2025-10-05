@@ -1,3 +1,8 @@
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Comparator;
+
+
 import com.ftn.sbnz.model.events.ActivityEvent;
 import com.ftn.sbnz.model.events.KeyStrokeEvent;
 import com.ftn.sbnz.model.events.AppFocusEvent;
@@ -9,6 +14,7 @@ import com.ftn.sbnz.model.events.NoBreakStreakEvent;
 import com.ftn.sbnz.model.events.MultiTaskOverloadEvent;
 import com.ftn.sbnz.model.events.EarlyFatigueSignal;
 import com.ftn.sbnz.model.events.MentalFatigueSignal;
+import com.ftn.sbnz.model.events.HighRiskTodaySignal;
 
 declare ActivityEvent
     extends ActivityEvent
@@ -75,6 +81,13 @@ declare MentalFatigueSignal
     @role(event)
     @timestamp(ts)
 end
+
+declare HighRiskTodaySignal
+    extends HighRiskTodaySignal
+    @role(event)
+    @timestamp(ts)
+end
+
 
 rule "Detect typing drop"
 when
@@ -169,6 +182,9 @@ when
     )
     eval($count.intValue() >= 30)
 then
+    System.out.println("MultiTaskOverloadEvent triggered! " +
+                           "TotalEventsIn2h=" + $count +
+                           ", LastEventTimestamp=" + $lastTs);
     insert(new MultiTaskOverloadEvent($lastTs));
 end
 
@@ -196,3 +212,51 @@ then
                            ", Timestamp=" + Math.max($binge.ts, $nobreak.ts));
     insert(new MentalFatigueSignal($nobreak.sessionId, Math.max($binge.ts, $nobreak.ts)));
 end
+
+rule "High risk today from early fatigue"
+when
+    $count: Number() from accumulate(
+        $e: EarlyFatigueSignal() over window:time(24h),
+        count($e)
+    )
+
+    $lastTs: Long() from accumulate(
+        $e: EarlyFatigueSignal() over window:time(24h),
+        max($e.ts)
+    )
+
+    $lastEvent: EarlyFatigueSignal(ts == $lastTs) over window:time(24h)
+
+    eval($count.intValue() >= 2)
+then
+    System.out.println("HighRiskToday triggered from EarlyFatigueSignal! SessionId="
+                       + $lastEvent.sessionId + ", ts=" + $lastEvent.ts
+                       + ", count=" + $count);
+
+    insert(new HighRiskTodaySignal($lastEvent.sessionId, $lastEvent.ts));
+end
+
+rule "High risk today from multitask/focus combo"
+when
+    $multiTs: Long() from accumulate(
+        $m: MultiTaskOverloadEvent() over window:time(24h),
+        max($m.ts)
+    )
+
+    $focusTs: Long() from accumulate(
+        $f: FocusDropEvent() over window:time(24h),
+        max($f.ts)
+    )
+
+    $lastFocus: FocusDropEvent(ts == $focusTs) over window:time(24h)
+then
+    System.out.println("HighRiskToday triggered from MultiTask+Focus combo! SessionId="
+                       + $lastFocus.getSessionId() + ", ts=" + Math.max($multiTs, $lastFocus.getTs()));
+    insert(new HighRiskTodaySignal($lastFocus.getSessionId(), Math.max($multiTs, $lastFocus.getTs())));
+end
+
+
+
+
+
+

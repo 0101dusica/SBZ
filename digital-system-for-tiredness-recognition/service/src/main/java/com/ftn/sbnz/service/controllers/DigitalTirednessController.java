@@ -1,6 +1,7 @@
 package com.ftn.sbnz.service.controllers;
 
 import com.ftn.sbnz.model.dto.SessionDTO;
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
 import com.ftn.sbnz.model.events.ActivityEvent;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
@@ -50,6 +51,12 @@ public class DigitalTirednessController {
         return java.util.Collections.emptyList();
         // return tirednessService.getRecommendationsForSession(userId);
     }
+
+    @PostMapping("/report-tiredness")
+    public Recommendation reportTiredness(@RequestBody TirednessReportDTO report) {
+        return tirednessService.backwardChaining(report);
+    }
+
 
     // to do: save sessions by user in one json
     @PostMapping("/end-session")
