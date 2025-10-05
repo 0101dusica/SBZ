@@ -198,10 +198,22 @@ public class TirednessService {
 
 
     public List<Recommendation> getRecommendationsForSession(long sessionId) {
-        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+        List<Recommendation> mainRecommendations = mainKieSession.getObjects(obj -> obj instanceof Recommendation)
                 .stream()
                 .map(obj -> (Recommendation) obj)
                 .filter(rec -> rec.getSessionId() == sessionId)
+                .collect(Collectors.toList());
+                
+        List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation) obj)
+                .filter(rec -> rec.getSessionId() == sessionId)
+                .collect(Collectors.toList());
+        
+        // Kombinuj oba lista
+        mainRecommendations.addAll(templateRecommendations);
+        
+        return mainRecommendations.stream()
                 .sorted(Comparator.comparingInt(rec -> rec.getRiskLevel().ordinal()))
                 .collect(Collectors.toList());
     }
