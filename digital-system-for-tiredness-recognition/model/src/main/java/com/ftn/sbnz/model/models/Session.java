@@ -12,10 +12,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Session {
-    public long sessionId;
-    public long userId;
-    public long startTimestamp;
-    public long endTimestamp;
+    public Long sessionId;
+    public Long userId;
+    public Long startTimestamp;
+    public Long endTimestamp;
     public int subjectiveTirednessLevel;
     public List<String> risks = new ArrayList<>();
     public int riskLevel;

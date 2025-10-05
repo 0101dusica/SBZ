@@ -5,47 +5,46 @@ import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
 import com.ftn.sbnz.model.models.enums.ActivityType;
 import com.ftn.sbnz.model.models.enums.DeviceType;
+import org.drools.core.time.SessionPseudoClock;
+import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.KieSessionConfiguration;
+import org.kie.api.runtime.conf.ClockTypeOption;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
 public class TirednessService {
 
     private final KieContainer kieContainer;
-//    private KieSession kieSession;
 
     private KieSession mainKieSession;
     private KieSession cepKieSession;
 
-//    public TirednessService(KieContainer kieContainer) {
-//        this.kieContainer = kieContainer;
-//    }
-
     public TirednessService(KieContainer kieContainer) {
         this.kieContainer = kieContainer;
         this.mainKieSession = kieContainer.newKieSession("mainKSession");
-        this.cepKieSession = kieContainer.newKieSession("cepKsession");
+
+        KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
+        config.setOption(ClockTypeOption.get("pseudo"));
+        this.cepKieSession = kieContainer.newKieSession("cepKsession", config);
     }
 
-    public void addSessions(List<Session> sessions) {
+    public void initSessions(List<Session> sessions) {
         for (Session session : sessions) {
-            // 1) Insert u mainKieSession (za same ActivityEvent i Session podatke)
             mainKieSession.insert(session);
 
-            // 2) Insert ActivityEvent u CEP + derivacije
             for (ActivityEvent activityEvent : session.getActivityEvents()) {
                 insertDerivedEvents(activityEvent);
             }
         }
 
-        // 3) CEP prvo izvršava pravila i kreira signal eventove
         cepKieSession.fireAllRules();
 
-        // 4) Ubaci signale iz CEP sesije u mainKieSession
         cepKieSession.getObjects(obj -> obj instanceof FocusDropEvent
                         || obj instanceof PassiveBingeEvent
                         || obj instanceof NoBreakStreakEvent
@@ -54,17 +53,15 @@ public class TirednessService {
                         || obj instanceof MentalFatigueSignal)
                 .forEach(mainKieSession::insert);
 
-        // 5) FireAllRules na mainKieSession za generisanje preporuka
+
         mainKieSession.fireAllRules();
     }
 
     public List<Recommendation> processEvent(ActivityEvent event) {
         insertDerivedEvents(event);
 
-        // 1) CEP prvo
         cepKieSession.fireAllRules();
 
-        // 2) Ubaci signale u mainKieSession
         cepKieSession.getObjects(obj -> obj instanceof FocusDropEvent
                         || obj instanceof PassiveBingeEvent
                         || obj instanceof NoBreakStreakEvent
@@ -73,7 +70,6 @@ public class TirednessService {
                         || obj instanceof MentalFatigueSignal)
                 .forEach(mainKieSession::insert);
 
-        // 3) Glavna sesija
         mainKieSession.fireAllRules();
 
         return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
@@ -85,8 +81,8 @@ public class TirednessService {
 
     private void insertDerivedEvents(ActivityEvent activityEvent) {
         long sessionId = activityEvent.getSessionId();
+        SessionPseudoClock clock = cepKieSession.getSessionClock();
 
-        // 1) Ako je tipkanje (WORK sa typingSpeed > 0)
         if (activityEvent.getActivityType() == ActivityType.WORK
                 && activityEvent.getTypingSpeed() > 0) {
             System.out.println("PRAVI KEY STROKE");
@@ -97,37 +93,40 @@ public class TirednessService {
                     activityEvent.getErrors()
             );
             cepKieSession.insert(keyStrokeEvent);
+            clock.advanceTime(keyStrokeEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
         }
 
-        // 2) Ako je entertainment/social
+
         if (activityEvent.getActivityType() == ActivityType.ENTERTAINMENT) {
             System.out.println("PRAVI APP FOCUS EVENT");
             AppFocusEvent appFocusEvent = new AppFocusEvent(
                     sessionId,
-                    "ENTERTAINMENT",
+                    activityEvent.category,
                     activityEvent.getStartTimestamp(),
                     activityEvent.getActivityDuration()
             );
             cepKieSession.insert(appFocusEvent);
+            clock.advanceTime(appFocusEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
         }
 
-        // 3) Ako ima break (breakDuration >= 0)
         if (activityEvent.getBreakDuration() >= 0) {
-            System.out.println("PRAVI BREAK EVENT");
-            UserBreakEvent userBreakEvent = new UserBreakEvent(
+            System.out.println("PRAVI USER ACTIVE EVENT");
+            UserActiveEvent activeEvent = new UserActiveEvent(
                     sessionId,
                     activityEvent.getStartTimestamp(),
+                    activityEvent.getActivityDuration(),
                     activityEvent.getBreakDuration()
             );
-            cepKieSession.insert(userBreakEvent);
+            cepKieSession.insert(activeEvent);
+            clock.advanceTime(activeEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
         }
 
-        ScreenTimeEvent screenTimeEvent = new ScreenTimeEvent(
-                activityEvent.getStartTimestamp(),
-                activityEvent.getDeviceType() == DeviceType.COMPUTING_DEVICE ? "COMPUTER" : "PHONE",
-                activityEvent.getActivityDuration()
-        );
-        cepKieSession.insert(screenTimeEvent);
+//        ScreenTimeEvent screenTimeEvent = new ScreenTimeEvent(
+//                activityEvent.getStartTimestamp(),
+//                activityEvent.getDeviceType() == DeviceType.COMPUTING_DEVICE ? "COMPUTER" : "PHONE",
+//                activityEvent.getActivityDuration()
+//        );
+//        cepKieSession.insert(screenTimeEvent);
     }
 
 

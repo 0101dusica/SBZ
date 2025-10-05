@@ -1,7 +1,7 @@
 import com.ftn.sbnz.model.events.ActivityEvent;
 import com.ftn.sbnz.model.events.KeyStrokeEvent;
 import com.ftn.sbnz.model.events.AppFocusEvent;
-import com.ftn.sbnz.model.events.UserBreakEvent;
+import com.ftn.sbnz.model.events.UserActiveEvent;
 import com.ftn.sbnz.model.events.ScreenTimeEvent;
 import com.ftn.sbnz.model.events.FocusDropEvent;
 import com.ftn.sbnz.model.events.PassiveBingeEvent;
@@ -28,8 +28,8 @@ declare AppFocusEvent
     @timestamp(ts)
 end
 
-declare UserBreakEvent
-    extends UserBreakEvent
+declare UserActiveEvent
+    extends UserActiveEvent
     @role(event)
     @timestamp(ts)
 end
@@ -88,6 +88,8 @@ when
        average($e.errorRate)
    )
 
+   $latestEvent: KeyStrokeEvent() over window:time(15m)
+
    $windowAvg: Double() from accumulate(
        $e: KeyStrokeEvent() over window:time(15m),
        average($e.charsPerMin)
@@ -100,16 +102,17 @@ when
 
     eval($windowAvg <= 0.75 * $baseline && $windowError >= 1.4 * $baselineError)
 then
-    insert(new FocusDropEvent(System.currentTimeMillis()));
+    System.out.println("FocusDropEvent triggered! baseline=" + $baseline + ", windowAvg=" + $windowAvg);
+    insert(new FocusDropEvent($latestEvent.getSessionId(), $latestEvent.getTs()));
 end
 
 rule "Detect passive binge"
 when
-    $lastTs: Long() from accumulate(
+    $latest: AppFocusEvent() from accumulate(
         $e: AppFocusEvent(category == "SOCIAL") over window:time(10m),
-        init( Long ts = 0L; ),
-        action( ts = $e.getTs(); ),
-        result( ts )
+        init( AppFocusEvent latest = null; ),
+        action( latest = $e; ),
+        result( latest )
     )
     $count: Number() from accumulate(
         $e: AppFocusEvent(category == "SOCIAL") over window:time(10m),
@@ -117,27 +120,39 @@ when
     )
     eval($count.intValue() >= 3)
 then
-    insert(new PassiveBingeEvent($lastTs));
+    System.out.println("PassiveBingeEvent triggered! SessionId=" + $latest.getSessionId() + ", LastTs=" + $latest.getTs());
+    insert(new PassiveBingeEvent($latest.getSessionId(), $latest.getTs()));
 end
+
 
 
 rule "Detect no-break streak"
 when
+    $lastEvent: UserActiveEvent(breakDuration < 5) over window:time(90m)
+
     $lastTs: Long() from accumulate(
-        $e: ActivityEvent(breakDuration < 5) over window:time(90m),
+        $e: UserActiveEvent(breakDuration < 5) over window:time(90m),
         init( Long ts = 0L; ),
-        action( ts = $e.getStartTimestamp(); ),
+        action( ts = $e.getTs(); ),
         result( ts )
     )
+
     $sumActive: Number() from accumulate(
-        $e: ActivityEvent(breakDuration < 5) over window:time(90m),
+        $e: UserActiveEvent(breakDuration < 5) over window:time(90m),
         sum($e.activityDuration)
     )
     eval($sumActive.doubleValue() >= 90)
-then
-    insert(new NoBreakStreakEvent($lastTs));
-end
 
+    not( NoBreakStreakEvent(sessionId == $lastEvent.sessionId,
+                                 ts >= ($lastTs - 5*60*1000),
+                                 ts <= ($lastTs + 5*60*1000)) )
+then
+    System.out.println("NoBreakStreakEvent triggered! " +
+                       "SessionId=" + $lastEvent.getSessionId() +
+                       ", LastEventTimestamp=" + $lastTs +
+                       ", TotalActiveMinutes=" + $sumActive);
+    insert(new NoBreakStreakEvent($lastEvent.getSessionId(), $lastTs));
+end
 
 
 rule "Detect multitask overload"
@@ -164,7 +179,10 @@ when
     $nobreak: NoBreakStreakEvent()
     eval(Math.abs($nobreak.ts - $focus.ts) <= 30*60*1000)
 then
-    insert(new EarlyFatigueSignal(Math.max($focus.ts, $nobreak.ts)));
+    System.out.println("EarlyFatigueSignal triggered! " +
+                           "SessionId=" + $focus.sessionId +
+                           ", Timestamp=" + Math.max($focus.ts, $nobreak.ts));
+    insert(new EarlyFatigueSignal($focus.sessionId, Math.max($focus.ts, $nobreak.ts)));
 end
 
 rule "Mental fatigue"
@@ -173,5 +191,8 @@ when
     $nobreak: NoBreakStreakEvent()
     eval(Math.abs($binge.ts - $nobreak.ts) <= 45*60*1000)
 then
-    insert(new MentalFatigueSignal(Math.max($binge.ts, $nobreak.ts)));
+    System.out.println("MentalFatigueSignal triggered! " +
+                           "SessionId=" + $nobreak.sessionId +
+                           ", Timestamp=" + Math.max($binge.ts, $nobreak.ts));
+    insert(new MentalFatigueSignal($nobreak.sessionId, Math.max($binge.ts, $nobreak.ts)));
 end
