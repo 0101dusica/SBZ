@@ -4,6 +4,7 @@ import com.ftn.sbnz.model.dto.TirednessReportDTO;
 import com.ftn.sbnz.model.events.*;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.Template;
 import com.ftn.sbnz.model.models.enums.ActivityType;
 import com.ftn.sbnz.model.models.enums.DeviceType;
 import com.ftn.sbnz.model.models.enums.TirednessRisk;
@@ -25,13 +26,16 @@ import java.util.stream.Collectors;
 public class TirednessService {
 
     private final KieContainer kieContainer;
+    private final TemplateService templateService;
 
     private KieSession mainKieSession;
     private KieSession cepKieSession;
     private KieSession backwardKieSession;
+    private KieSession templateKieSession;
 
-    public TirednessService(KieContainer kieContainer) {
+    public TirednessService(KieContainer kieContainer, TemplateService templateService) {
         this.kieContainer = kieContainer;
+        this.templateService = templateService;
         this.mainKieSession = kieContainer.newKieSession("mainKSession");
 
         KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
@@ -39,6 +43,7 @@ public class TirednessService {
         this.cepKieSession = kieContainer.newKieSession("cepKSession", config);
 
         this.backwardKieSession = kieContainer.newKieSession("backwardKSession");
+        this.templateKieSession = kieContainer.newKieSession("templateKSession");
     }
 
     public void initSessions(List<Session> sessions) {
@@ -90,6 +95,9 @@ public class TirednessService {
         if (session != null) {
             session.getActivityEvents().add(event);
             mainKieSession.update(mainKieSession.getFactHandle(session), session);
+            
+            // Dodaj template pravila
+            processTemplateRules(session, event);
         }
         insertDerivedEvents(event);
 
@@ -106,12 +114,41 @@ public class TirednessService {
 
         mainKieSession.fireAllRules();
 
-        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+        // Kombinuj preporuke iz glavnog i template KieSession-a
+        List<Recommendation> mainRecommendations = mainKieSession.getObjects(obj -> obj instanceof Recommendation)
                 .stream()
                 .map(obj -> (Recommendation)obj)
                 .filter(rec -> rec.getSessionId() == event.sessionId)
+                .collect(Collectors.toList());
+                
+        List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation)obj)
+                .filter(rec -> rec.getSessionId() == event.sessionId)
+                .collect(Collectors.toList());
+        
+        // Kombinuj oba lista
+        mainRecommendations.addAll(templateRecommendations);
+        
+        return mainRecommendations.stream()
                 .sorted(Comparator.comparingInt(rec -> rec.getRiskLevel().ordinal()))
                 .collect(Collectors.toList());
+    }
+    
+    private void processTemplateRules(Session session, ActivityEvent event) {
+        // Učitaj template za korisnika
+        Template userTemplate = templateService.getUserTemplate(session.getUserId());
+        
+        // Ubaci template u template KieSession
+        templateKieSession.insert(userTemplate);
+        templateKieSession.insert(session);
+        templateKieSession.insert(event);
+        
+        // Pokreni template pravila
+        templateKieSession.fireAllRules();
+        
+        System.out.println("Template rules processed for user: " + session.getUserId() + 
+                          " with template: " + userTemplate.getName());
     }
 
 
