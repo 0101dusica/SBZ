@@ -89,6 +89,18 @@
           "typingSpeed": 0,
           "errors": 0,
           "category": "SOCIAL"
+        },
+        {
+          "id": 8,
+          "sessionId": 746272,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759653100000,
+          "endTimestamp": 1759653400000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 90,
+          "errors": 30
         }
       ]
     }

@@ -102,41 +102,25 @@ import { ButtonComponent } from '../../../sharedModule/button/button.component';
             <div class="tiredness-levels">
               <div class="level-item">
                 <label>
-                  <input type="checkbox" [(ngModel)]="template.enableLevel1Action">
-                  <span class="level-badge level-1">1</span>
-                  Vrlo blagi umor - ignoriši
+                  <input type="checkbox" [(ngModel)]="template.enableLowAction">
+                  <span class="level-badge level-low">LOW</span>
+                  Blagi umor - kratka pauza
                 </label>
               </div>
               
               <div class="level-item">
                 <label>
-                  <input type="checkbox" [(ngModel)]="template.enableLevel2Action">
-                  <span class="level-badge level-2">2</span>
-                  Blagi umor - diskretno upozorenje
+                  <input type="checkbox" [(ngModel)]="template.enableMediumAction">
+                  <span class="level-badge level-medium">MED</span>
+                  Umeren umor - duža pauza
                 </label>
               </div>
               
               <div class="level-item">
                 <label>
-                  <input type="checkbox" [(ngModel)]="template.enableLevel3Action">
-                  <span class="level-badge level-3">3</span>
-                  Umeren umor - kratka pauza
-                </label>
-              </div>
-              
-              <div class="level-item">
-                <label>
-                  <input type="checkbox" [(ngModel)]="template.enableLevel4Action">
-                  <span class="level-badge level-4">4</span>
-                  Visok umor - duža pauza
-                </label>
-              </div>
-              
-              <div class="level-item">
-                <label>
-                  <input type="checkbox" [(ngModel)]="template.enableLevel5Action">
-                  <span class="level-badge level-5">5</span>
-                  Kritičan umor - obavezna pauza
+                  <input type="checkbox" [(ngModel)]="template.enableHighAction">
+                  <span class="level-badge level-high">HIGH</span>
+                  Visok umor - obavezna pauza
                 </label>
               </div>
             </div>
@@ -346,11 +330,9 @@ import { ButtonComponent } from '../../../sharedModule/button/button.component';
       font-size: 0.9rem;
     }
 
-    .level-1 { background: #4caf50; }
-    .level-2 { background: #8bc34a; }
-    .level-3 { background: #ff9800; }
-    .level-4 { background: #ff5722; }
-    .level-5 { background: #f44336; }
+    .level-low { background: #4caf50; }
+    .level-medium { background: #ff9800; }
+    .level-high { background: #f44336; }
 
     .checkbox-label {
       display: flex;

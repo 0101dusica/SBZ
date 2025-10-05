@@ -18,12 +18,10 @@ export interface Template {
   appSwitchCount: number;
   passiveBingeMinutes: number;
   
-  // Akcije po nivoima umora (1-5)
-  enableLevel1Action: boolean;
-  enableLevel2Action: boolean;
-  enableLevel3Action: boolean;
-  enableLevel4Action: boolean;
-  enableLevel5Action: boolean;
+  // Akcije po nivoima umora (1-3) - simplified
+  enableLowAction: boolean;      // Nivo 1: Blagi umor
+  enableMediumAction: boolean;   // Nivo 2: Umeren umor
+  enableHighAction: boolean;     // Nivo 3: Visok umor
   
   // Integracija uređaja
   combineDevices: boolean;

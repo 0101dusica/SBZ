@@ -1,70 +1,22 @@
 {
   "sessions": [
     {
-      "sessionId": 100,
-      "userId": 397354,
-      "startTimestamp": 1728166800000,
+      "sessionId": 10002,
+      "userId": 100,
+      "startTimestamp": 1759670000000,
       "endTimestamp": 0,
       "activityEvents": [
         {
-          "id": 1001,
-          "sessionId": 100,
+          "id": 1,
+          "sessionId": 10002,
           "activityType": "WORK",
           "deviceType": "COMPUTING_DEVICE",
-          "startTimestamp": 1728166800000,
-          "endTimestamp": 1728171600000,
-          "activityDuration": 80,
-          "breakDuration": 5,
-          "typingSpeed": 250,
-          "errors": 3
-        },
-        {
-          "id": 1002,
-          "sessionId": 100,
-          "activityType": "WORK",
-          "deviceType": "COMPUTING_DEVICE",
-          "startTimestamp": 1728171900000,
-          "endTimestamp": 1728176400000,
-          "activityDuration": 75,
-          "breakDuration": 3,
-          "typingSpeed": 240,
-          "errors": 5
-        },
-        {
-          "id": 1003,
-          "sessionId": 100,
-          "activityType": "ENTERTAINMENT",
-          "deviceType": "PHONE_DEVICE",
-          "startTimestamp": 1728176700000,
-          "endTimestamp": 1728180300000,
-          "activityDuration": 60,
-          "breakDuration": 2,
-          "typingSpeed": 0,
-          "errors": 0
-        },
-        {
-          "id": 1004,
-          "sessionId": 100,
-          "activityType": "WORK",
-          "deviceType": "COMPUTING_DEVICE",
-          "startTimestamp": 1728180600000,
-          "endTimestamp": 1728186000000,
-          "activityDuration": 90,
-          "breakDuration": 4,
-          "typingSpeed": 220,
-          "errors": 8
-        },
-        {
-          "id": 1005,
-          "sessionId": 100,
-          "activityType": "ENTERTAINMENT",
-          "deviceType": "PHONE_DEVICE",
-          "startTimestamp": 1728186300000,
-          "endTimestamp": 1728190800000,
-          "activityDuration": 75,
-          "breakDuration": 1,
-          "typingSpeed": 0,
-          "errors": 0
+          "startTimestamp": 1759670000000,
+          "endTimestamp": 1759679600000,
+          "activityDuration": 160,
+          "breakDuration": 0,
+          "typingSpeed": 300,
+          "errors": 2
         }
       ]
     }

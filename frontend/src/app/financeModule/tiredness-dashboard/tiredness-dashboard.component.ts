@@ -38,17 +38,12 @@ interface ActivityForm {
         <div class="logo-section">
           <img src="logo/logo-text.png" alt="Digital Care Logo" class="logo"/>
         </div>
-
-        <div class="header-actions">
+        <div class="header-actions" style="margin-left:auto;">
           <button class="settings-btn" (click)="openSettings()" title="Postavke">
             <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97c0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1c0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66Z"/>
             </svg>
           </button>
-        </div>
-
-        <div class="logo-img-section">
-          <img src="logo/logo-img.png" alt="Digital Care" class="logo-img"/>
         </div>
       </div>
 
@@ -735,7 +730,7 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
   activities: ActivityEvent[] = [];
   @ViewChild('pieChart', { static: false }) pieChartRef!: ElementRef<HTMLCanvasElement>;
   currentSessionId: number = 1;
-  currentUserId: number = 1;
+  currentUserId: number = 100;
   isSessionActive: boolean = false;
   isStartingSession: boolean = false;
 
@@ -791,13 +786,9 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
     const storedUserId = localStorage.getItem('tiredness_userId');
     const storedSessionId = localStorage.getItem('tiredness_sessionId');
     const storedSessionActive = localStorage.getItem('tiredness_isSessionActive');
-    if (storedUserId) {
-      this.currentUserId = parseInt(storedUserId, 10);
-    } else {
-      // Generate a random userId and store it
-      this.currentUserId = Math.floor(Math.random() * 1000000) + 1;
-      localStorage.setItem('tiredness_userId', this.currentUserId.toString());
-    }
+    // Always use userId=100 for consistency
+    this.currentUserId = 100;
+    localStorage.setItem('tiredness_userId', this.currentUserId.toString());
     if (storedSessionId) {
       this.currentSessionId = parseInt(storedSessionId, 10);
     }
@@ -1095,20 +1086,17 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
   startNewSession() {
     this.isStartingSession = true;
-    // this.tirednessService.endSession().subscribe({
-    //   next: () => {
-    //     // Then start new session
-    //     this.currentSessionId++;
-    //     localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
-    //     localStorage.setItem('tiredness_isSessionActive', 'true');
-    //     this.startSession();
-    //   },
-    //   error: (err) => {
-    //     console.error('Error ending session:', err);
-    //     this.isStartingSession = false;
-    //   }
-    // });
-    // Umesto toga, samo inkrementiraj sessionId i pokreni novu sesiju
+    // Reset all session-related data
+    this.timeData = {
+      totalTime: { hours: 0, minutes: 0 },
+      workTime: { hours: 0, minutes: 0 },
+      entertainmentTime: { hours: 0, minutes: 0 }
+    };
+    this.activities = [];
+    this.recommendations = [];
+    this.currentSession = null;
+
+    // Start new session
     this.currentSessionId++;
     localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
     localStorage.setItem('tiredness_isSessionActive', 'true');
@@ -1137,10 +1125,15 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
           next: () => {
             if (simulationSessionId) {
               // Set the simulation sessionId as current
+              console.log('Setting currentSessionId from', this.currentSessionId, 'to', simulationSessionId);
               this.currentSessionId = simulationSessionId;
               localStorage.setItem('tiredness_sessionId', this.currentSessionId.toString());
               localStorage.setItem('tiredness_isSessionActive', 'true');
               this.isSessionActive = true;
+              
+              // CLEAR all previous data before loading new simulation
+              this.activities = [];
+              this.recommendations = [];
               
               // Load activities directly from JSON first
               this.activities = simulationActivities || [];
@@ -1150,11 +1143,13 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
               this.calculateTimeDataFromActivities();
               this.updatePieChart();
               
-              // Also try to load from backend as backup
+              // Load only recommendations from backend, keep activities from JSON  
               setTimeout(() => {
-                this.loadCurrentSession();
+                console.log('Before setTimeout calls - currentSessionId:', this.currentSessionId);
+                // Don't call loadCurrentSession() - it overwrites activities from JSON with empty backend data
+                // this.loadCurrentSession();
                 this.loadRecommendations();
-              }, 500);
+              }, 2000);
               
               // Reset simulation selection
               this.selectedSimulation = null;

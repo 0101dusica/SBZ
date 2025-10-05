@@ -46,33 +46,13 @@ public class DigitalTirednessController {
         return tirednessService.getRecommendationsForSession(sessionId);
     }
 
-    @GetMapping("/recommendations/user/{userId}")
-    public List<Recommendation> getRecommendationsForUser(@PathVariable long userId) {
-        return java.util.Collections.emptyList();
-        // return tirednessService.getRecommendationsForSession(userId);
-    }
-
     @PostMapping("/report-tiredness")
     public Recommendation reportTiredness(@RequestBody TirednessReportDTO report) {
         return tirednessService.backwardChaining(report);
     }
 
-
-    // to do: save sessions by user in one json
     @PostMapping("/end-session")
     public String endSession(){
         return tirednessService.endSession();
-    }
-
-    @PostMapping("/submit-tiredness-level/{sessionId}")
-    public ResponseEntity<Void> submitTirednessLevel(@PathVariable long sessionId, @RequestBody int level) {
-        // TODO: implement logic
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/activities/{sessionId}")
-    public List<ActivityEvent> getActivitiesForSession(@PathVariable long sessionId) {
-        // TODO: implement logic to return activities for session
-        return java.util.Collections.emptyList();
     }
 }

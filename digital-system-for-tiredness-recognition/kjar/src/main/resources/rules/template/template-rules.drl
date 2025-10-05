@@ -16,7 +16,7 @@ end
 // Template-aware pravila
 rule "Template - Work break threshold"
 when
-    $template: Template($userId: userId, $workThreshold: workBreakThreshold, enableLevel3Action == true)
+    $template: Template($userId: userId, $workThreshold: workBreakThreshold, enableMediumAction == true)
     $session: Session(userId == $userId, $sessionId: sessionId)
     $workEvent: ActivityEvent(sessionId == $sessionId, activityType == ActivityType.WORK, activityDuration >= $workThreshold)
     not( Recommendation(sessionId == $sessionId, riskLevel == TirednessRisk.MEDIUM, message.contains("rad")) )
@@ -31,7 +31,7 @@ end
 
 rule "Template - Entertainment threshold"
 when
-    $template: Template($userId: userId, $entertainmentThreshold: entertainmentThreshold, enableLevel2Action == true)
+    $template: Template($userId: userId, $entertainmentThreshold: entertainmentThreshold, enableLowAction == true)
     $session: Session(userId == $userId, $sessionId: sessionId)
     $entertainmentEvent: ActivityEvent(sessionId == $sessionId, activityType == ActivityType.ENTERTAINMENT, activityDuration >= $entertainmentThreshold)
     not( Recommendation(sessionId == $sessionId, riskLevel == TirednessRisk.LOW, message.contains("zabava")) )
@@ -44,9 +44,9 @@ then
     ));
 end
 
-rule "Template - High fatigue for level 4"
+rule "Template - High fatigue"
 when
-    $template: Template($userId: userId, enableLevel4Action == true)
+    $template: Template($userId: userId, enableHighAction == true)
     $session: Session(userId == $userId, $sessionId: sessionId)
     $totalWork: Number(intValue >= 200) from accumulate(
         ActivityEvent(sessionId == $sessionId, activityType == ActivityType.WORK, $duration: activityDuration),
@@ -62,9 +62,9 @@ then
     ));
 end
 
-rule "Template - Critical fatigue for level 5"
+rule "Template - Critical fatigue"
 when
-    $template: Template($userId: userId, enableLevel5Action == true)
+    $template: Template($userId: userId, enableHighAction == true)
     $session: Session(userId == $userId, $sessionId: sessionId)
     $totalTime: Number(intValue >= 400) from accumulate(
         ActivityEvent(sessionId == $sessionId, $duration: activityDuration),

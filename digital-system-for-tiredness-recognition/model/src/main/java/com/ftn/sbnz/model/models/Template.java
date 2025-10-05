@@ -23,12 +23,10 @@ public class Template {
     private int appSwitchCount = 30;               // Broj prelaza aplikacija za multitasking
     private int passiveBingeMinutes = 120;         // Pasivno korišćenje društvenih mreža
     
-    // Akcije po nivoima umora (1-5)
-    private boolean enableLevel1Action = false;     // Nivo 1: Ignoriši
-    private boolean enableLevel2Action = false;     // Nivo 2: Blago upozorenje
-    private boolean enableLevel3Action = true;      // Nivo 3: Preporuči kratku pauzu
-    private boolean enableLevel4Action = true;      // Nivo 4: Preporuči dužu pauzu
-    private boolean enableLevel5Action = true;      // Nivo 5: Intenzivno upozorenje
+    // Akcije po nivoima umora (1-3) - simplified
+    private boolean enableLowAction = true;       // Nivo 1: Blagi umor - kratka pauza
+    private boolean enableMediumAction = true;    // Nivo 2: Umeren umor - duža pauza  
+    private boolean enableHighAction = true;      // Nivo 3: Visok umor - obavezna pauza
     
     // Integracija uređaja
     private boolean combineDevices = true;          // Da li sabirati vreme računar+telefon
