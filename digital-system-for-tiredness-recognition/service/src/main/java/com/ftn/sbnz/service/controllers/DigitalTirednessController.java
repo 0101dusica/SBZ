@@ -21,16 +21,22 @@ public class DigitalTirednessController {
     }
 
     // sent init sessions in memory
-    @PostMapping("/add")
-    public void addSessions(@RequestBody SessionDTO sessionDTO) {
+    @PostMapping("/init-session")
+    public void initSession(@RequestBody SessionDTO sessionDTO) {
         List<Session> allSessions = sessionDTO.getSessions();
         tirednessService.addSessions(allSessions);
     }
 
     // add new event in one session
-    @PostMapping("/event")
+    @PostMapping("/add-event")
     public List<Recommendation> processEvent(@RequestBody ActivityEvent event) {
         return tirednessService.processEvent(event);
+    }
+
+    @GetMapping("/current-session/{sessionId}")
+    public SessionDTO getSession(@PathVariable long sessionId) {
+        return null;
+//        return tirednessService.getRecommendationsForSession(sessionId);
     }
 
     @GetMapping("/recommendations/{sessionId}")
@@ -38,7 +44,13 @@ public class DigitalTirednessController {
         return tirednessService.getRecommendationsForSession(sessionId);
     }
 
+    @GetMapping("/recommendations/{userId}")
+    public List<Recommendation> getRecommendationsForUser(@PathVariable long userId) {
+        return null;
+//        return tirednessService.getRecommendationsForSession(userId);
+    }
 
+    // to do: save sessions by user in one json
     @PostMapping("/end-session")
     public String endSession(){
         return tirednessService.endSession();

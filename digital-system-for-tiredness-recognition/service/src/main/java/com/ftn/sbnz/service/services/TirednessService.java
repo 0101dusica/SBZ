@@ -139,6 +139,14 @@ public class TirednessService {
                 .collect(Collectors.toList());
     }
 
+//    public List<Recommendation> getRecommendationsForUser(long userId) {
+//        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
+//                .stream()
+//                .map(obj -> (Recommendation)obj)
+//                .filter(rec -> rec.getSessionId() == sessionId)
+//                .collect(Collectors.toList());
+//    }
+
 
     public String endSession() {
         try {

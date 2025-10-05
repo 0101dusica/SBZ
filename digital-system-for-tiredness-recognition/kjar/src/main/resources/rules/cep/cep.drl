@@ -1,67 +1,77 @@
 import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.events.KeyStrokeEvent;
+import com.ftn.sbnz.model.events.AppFocusEvent;
+import com.ftn.sbnz.model.events.UserBreakEvent;
+import com.ftn.sbnz.model.events.ScreenTimeEvent;
+import com.ftn.sbnz.model.events.FocusDropEvent;
+import com.ftn.sbnz.model.events.PassiveBingeEvent;
+import com.ftn.sbnz.model.events.NoBreakStreakEvent;
+import com.ftn.sbnz.model.events.MultiTaskOverloadEvent;
+import com.ftn.sbnz.model.events.EarlyFatigueSignal;
+import com.ftn.sbnz.model.events.MentalFatigueSignal;
 
 declare ActivityEvent
-    extends com.ftn.sbnz.model.events.ActivityEvent
+    extends ActivityEvent
     @role(event)
     @timestamp(startTimestamp)
 end
 
 declare KeyStrokeEvent
-    extends com.ftn.sbnz.model.events.KeyStrokeEvent
+    extends KeyStrokeEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare AppFocusEvent
-    extends com.ftn.sbnz.model.events.AppFocusEvent
+    extends AppFocusEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare UserBreakEvent
-    extends com.ftn.sbnz.model.events.UserBreakEvent
+    extends UserBreakEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare ScreenTimeEvent
-    extends com.ftn.sbnz.model.events.ScreenTimeEvent
+    extends ScreenTimeEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare FocusDropEvent
-    extends com.ftn.sbnz.model.events.FocusDropEvent
+    extends FocusDropEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare PassiveBingeEvent
-    extends com.ftn.sbnz.model.events.PassiveBingeEvent
+    extends PassiveBingeEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare NoBreakStreakEvent
-    extends com.ftn.sbnz.model.events.NoBreakStreakEvent
+    extends NoBreakStreakEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare MultiTaskOverloadEvent
-    extends com.ftn.sbnz.model.events.MultiTaskOverloadEvent
+    extends MultiTaskOverloadEvent
     @role(event)
     @timestamp(ts)
 end
 
 declare EarlyFatigueSignal
-    extends com.ftn.sbnz.model.events.EarlyFatigueSignal
+    extends EarlyFatigueSignal
     @role(event)
     @timestamp(ts)
 end
 
 declare MentalFatigueSignal
-    extends com.ftn.sbnz.model.events.MentalFatigueSignal
+    extends MentalFatigueSignal
     @role(event)
     @timestamp(ts)
 end
