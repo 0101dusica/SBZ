@@ -35,9 +35,8 @@ public class DigitalTirednessController {
     }
 
     @GetMapping("/current-session/{sessionId}")
-    public SessionDTO getSession(@PathVariable long sessionId) {
-        return null;
-//        return tirednessService.getRecommendationsForSession(sessionId);
+    public Session getSession(@PathVariable Long sessionId) {
+        return tirednessService.getSessionById(sessionId);
     }
 
     @GetMapping("/session-recommendations/{sessionId}")
