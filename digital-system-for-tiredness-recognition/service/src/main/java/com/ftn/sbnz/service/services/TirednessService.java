@@ -1,10 +1,12 @@
 package com.ftn.sbnz.service.services;
 
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
 import com.ftn.sbnz.model.events.*;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.Session;
 import com.ftn.sbnz.model.models.enums.ActivityType;
 import com.ftn.sbnz.model.models.enums.DeviceType;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
 import org.drools.core.time.SessionPseudoClock;
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
@@ -13,6 +15,7 @@ import org.kie.api.runtime.KieSessionConfiguration;
 import org.kie.api.runtime.conf.ClockTypeOption;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -24,6 +27,7 @@ public class TirednessService {
 
     private KieSession mainKieSession;
     private KieSession cepKieSession;
+    private KieSession backwardKieSession;
 
     public TirednessService(KieContainer kieContainer) {
         this.kieContainer = kieContainer;
@@ -31,7 +35,9 @@ public class TirednessService {
 
         KieSessionConfiguration config = KieServices.Factory.get().newKieSessionConfiguration();
         config.setOption(ClockTypeOption.get("pseudo"));
-        this.cepKieSession = kieContainer.newKieSession("cepKsession", config);
+        this.cepKieSession = kieContainer.newKieSession("cepKSession", config);
+
+        this.backwardKieSession = kieContainer.newKieSession("backwardKSession");
     }
 
     public void initSessions(List<Session> sessions) {
@@ -50,7 +56,8 @@ public class TirednessService {
                         || obj instanceof NoBreakStreakEvent
                         || obj instanceof MultiTaskOverloadEvent
                         || obj instanceof EarlyFatigueSignal
-                        || obj instanceof MentalFatigueSignal)
+                        || obj instanceof MentalFatigueSignal
+                        || obj instanceof HighRiskTodaySignal)
                 .forEach(mainKieSession::insert);
 
 
@@ -67,7 +74,8 @@ public class TirednessService {
                         || obj instanceof NoBreakStreakEvent
                         || obj instanceof MultiTaskOverloadEvent
                         || obj instanceof EarlyFatigueSignal
-                        || obj instanceof MentalFatigueSignal)
+                        || obj instanceof MentalFatigueSignal
+                        || obj instanceof HighRiskTodaySignal)
                 .forEach(mainKieSession::insert);
 
         mainKieSession.fireAllRules();
@@ -75,6 +83,8 @@ public class TirednessService {
         return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
                 .stream()
                 .map(obj -> (Recommendation)obj)
+                .filter(rec -> rec.getSessionId() == event.sessionId)
+                .sorted(Comparator.comparingInt(rec -> rec.getRiskLevel().ordinal()))
                 .collect(Collectors.toList());
     }
 
@@ -85,7 +95,7 @@ public class TirednessService {
 
         if (activityEvent.getActivityType() == ActivityType.WORK
                 && activityEvent.getTypingSpeed() > 0) {
-            System.out.println("PRAVI KEY STROKE");
+            System.out.println("CREATE KEY STROKE");
             KeyStrokeEvent keyStrokeEvent = new KeyStrokeEvent(
                     sessionId,
                     activityEvent.getStartTimestamp(),
@@ -98,7 +108,7 @@ public class TirednessService {
 
 
         if (activityEvent.getActivityType() == ActivityType.ENTERTAINMENT) {
-            System.out.println("PRAVI APP FOCUS EVENT");
+            System.out.println("CREATE APP FOCUS EVENT");
             AppFocusEvent appFocusEvent = new AppFocusEvent(
                     sessionId,
                     activityEvent.category,
@@ -110,7 +120,7 @@ public class TirednessService {
         }
 
         if (activityEvent.getBreakDuration() >= 0) {
-            System.out.println("PRAVI USER ACTIVE EVENT");
+            System.out.println("CREATE USER ACTIVE EVENT");
             UserActiveEvent activeEvent = new UserActiveEvent(
                     sessionId,
                     activityEvent.getStartTimestamp(),
@@ -121,22 +131,18 @@ public class TirednessService {
             clock.advanceTime(activeEvent.getTs() - clock.getCurrentTime(), TimeUnit.MILLISECONDS);
         }
 
-//        ScreenTimeEvent screenTimeEvent = new ScreenTimeEvent(
-//                activityEvent.getStartTimestamp(),
-//                activityEvent.getDeviceType() == DeviceType.COMPUTING_DEVICE ? "COMPUTER" : "PHONE",
-//                activityEvent.getActivityDuration()
-//        );
-//        cepKieSession.insert(screenTimeEvent);
     }
 
 
     public List<Recommendation> getRecommendationsForSession(long sessionId) {
         return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
                 .stream()
-                .map(obj -> (Recommendation)obj)
+                .map(obj -> (Recommendation) obj)
                 .filter(rec -> rec.getSessionId() == sessionId)
+                .sorted(Comparator.comparingInt(rec -> rec.getRiskLevel().ordinal()))
                 .collect(Collectors.toList());
     }
+
 
 //    public List<Recommendation> getRecommendationsForUser(long userId) {
 //        return mainKieSession.getObjects(obj -> obj instanceof Recommendation)
@@ -145,6 +151,32 @@ public class TirednessService {
 //                .filter(rec -> rec.getSessionId() == sessionId)
 //                .collect(Collectors.toList());
 //    }
+
+    public Recommendation backwardChaining(TirednessReportDTO report) {
+        backwardKieSession.insert(report);
+
+        List<ActivityEvent> events = mainKieSession.getObjects(obj -> obj instanceof Session)
+                .stream()
+                .map(obj -> (Session) obj)
+                .filter(s -> s.getSessionId() == report.sessionId)
+                .flatMap(s -> s.getActivityEvents().stream())
+                .collect(Collectors.toList());
+
+        for (ActivityEvent event : events) {
+            backwardKieSession.insert(event);
+        }
+
+        backwardKieSession.fireAllRules();
+
+        List<Recommendation> recommendations = backwardKieSession.getObjects(obj -> obj instanceof Recommendation)
+                .stream()
+                .map(obj -> (Recommendation) obj)
+                .sorted(Comparator.comparingInt(r -> r.getRiskLevel().ordinal()))
+                .map(obj -> (Recommendation)obj)
+                .collect(Collectors.toList());
+
+        return recommendations.isEmpty() ? null : recommendations.get(0);
+    }
 
 
     public String endSession() {
@@ -157,6 +189,11 @@ public class TirednessService {
             if (cepKieSession != null) {
                 cepKieSession.dispose();
                 cepKieSession = null;
+            }
+
+            if (backwardKieSession != null) {
+                backwardKieSession.dispose();
+                backwardKieSession = null;
             }
 
             return "Successfully ended all sessions";

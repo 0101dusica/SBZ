@@ -5,9 +5,6 @@
       "userId": 100,
       "startTimestamp": 1759650000000,
       "endTimestamp": 1759653600000,
-      "subjectiveTirednessLevel": 0,
-      "risks": [],
-      "riskLevel": 0,
       "activityEvents": [
         {
           "id": 1,

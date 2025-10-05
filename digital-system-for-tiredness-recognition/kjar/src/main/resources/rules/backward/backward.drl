@@ -1,1 +1,68 @@
 package rules.backward;
+dialect "mvel";
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
+import com.ftn.sbnz.model.hypothesis.WorkloadHypothesis;
+import com.ftn.sbnz.model.hypothesis.PassiveUseHypothesis;
+import com.ftn.sbnz.model.hypothesis.MultitaskHypothesis;
+
+rule "Start backward chaining from reported tiredness"
+when
+    $report: TirednessReportDTO(getSubjectiveTirednessLevel() >= 4)
+then
+    System.out.println("Backward chaining initiated for session: " + $report.getSessionId());
+
+    insert(new WorkloadHypothesis($report.getSessionId()));
+    insert(new PassiveUseHypothesis($report.getSessionId()));
+    insert(new MultitaskHypothesis($report.getSessionId()));
+end
+
+rule "Detect workload cause"
+when
+    $hypo: WorkloadHypothesis($sessionId: getSessionId())
+    $totalWork: Number() from accumulate(
+        $e: ActivityEvent(getSessionId() == $sessionId, getActivityType() == ActivityType.WORK),
+        sum($e.getActivityDuration())
+    )
+    $longBreaks: Number() from accumulate(
+        $e: ActivityEvent(getSessionId() == $sessionId, getActivityType() == ActivityType.WORK, getBreakDuration() >= 15),
+        count($e)
+    )
+    eval($totalWork.intValue() >= 180 && $longBreaks.intValue() == 0)
+then
+    insert(new Recommendation($sessionId, "Take a 20-min break and go for a walk.", TirednessRisk.HIGH));
+end
+
+rule "Detect passive use cause"
+when
+    $hypo: PassiveUseHypothesis($sessionId: getSessionId())
+    $socialTime: Number() from accumulate(
+        $e: ActivityEvent(getSessionId() == $sessionId, getActivityType() == ActivityType.ENTERTAINMENT, getCategory() == "SOCIAL"),
+        sum($e.getActivityDuration())
+    )
+    eval($socialTime.intValue() >= 90)
+then
+    System.out.println("Passive use detected for session: " + $sessionId);
+    insert(new Recommendation($sessionId, "Reduce social media time, try active rest.", TirednessRisk.HIGH));
+end
+
+rule "Detect multitasking cause"
+when
+    $hypo: MultitaskHypothesis($sessionId: getSessionId())
+    $eventCount: Number() from accumulate(
+        $e: ActivityEvent(getSessionId() == $sessionId),
+        count($e)
+    )
+    eval($eventCount.intValue() >= 30)
+then
+    System.out.println("Multitasking detected for session: " + $sessionId);
+    insert(new Recommendation($sessionId, "Close unnecessary apps and focus on one task.", TirednessRisk.HIGH));
+end

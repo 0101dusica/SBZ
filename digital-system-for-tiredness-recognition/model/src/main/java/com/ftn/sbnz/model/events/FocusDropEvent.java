@@ -14,5 +14,5 @@ public class FocusDropEvent {
     public Long getTs() { return ts; }
     public void setTs(Long ts) { this.ts = ts; }
     public Long getSessionId() { return sessionId; }
-    public void setSessionId(Long ts) { this.sessionId = sessionId; }
+    public void setSessionId(Long sessionId) { this.sessionId = sessionId; }
 }

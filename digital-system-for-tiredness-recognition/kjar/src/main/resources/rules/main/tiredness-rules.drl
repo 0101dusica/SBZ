@@ -2,22 +2,23 @@ package rules.main;
 dialect  "mvel"
 
 import com.ftn.sbnz.model.models.Session;
-import com.ftn.sbnz.model.events.EarlyFatigueSignal;
-import com.ftn.sbnz.model.events.MentalFatigueSignal;
 import com.ftn.sbnz.model.models.Recommendation;
 import com.ftn.sbnz.model.models.enums.TirednessRisk;
-
+import com.ftn.sbnz.model.events.EarlyFatigueSignal;
+import com.ftn.sbnz.model.events.MentalFatigueSignal;
+import com.ftn.sbnz.model.events.HighRiskTodaySignal;
 
 
 rule "Recommendation early fatigue"
 when
     $session: Session($id: sessionId)
     $signal: EarlyFatigueSignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.LOW) )
 then
     insert(new Recommendation(
         $id,
         "Take a 10-min break and stretch your eyes.",
-        TirednessRisk.MEDIUM
+        TirednessRisk.LOW
     ));
 end
 
@@ -25,10 +26,24 @@ rule "Recommendation mental fatigue"
 when
     $session: Session($id: sessionId)
     $signal: MentalFatigueSignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.MEDIUM) )
 then
     insert(new Recommendation(
         $id,
         "Limit social media for 30 min, take an active break.",
+        TirednessRisk.MEDIUM
+    ));
+end
+
+rule "Recommendation high risk today"
+when
+    $session: Session($id: sessionId)
+    $signal: HighRiskTodaySignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.HIGH) )
+then
+    insert(new Recommendation(
+        $id,
+        "Take a 20–30 min break and switch to a different activity type (walk or light exercise).",
         TirednessRisk.HIGH
     ));
 end
@@ -39,66 +54,5 @@ end
 
 
 
-//
-//import com.ftn.sbnz.model.models.Session;
-//import com.ftn.sbnz.model.models.Recommendation;
-//import com.ftn.sbnz.model.events.ActivityEvent;
-//import com.ftn.sbnz.model.models.enums.TirednessRisk;
-//import com.ftn.sbnz.model.models.enums.ActivityType;
-//import java.util.List;
-//
-//rule "tiredness-rules"
-//    when
-//    then
-//end
-//
-//rule "Mark long uninterrupted work"
-//when
-//   $session: Session(risks not contains "long_uninterrupted_work")
-//   $event: ActivityEvent(
-//               activityType == ActivityType.WORK,
-//               activityDuration > 90,
-//               breakDuration <= 5,
-//               sessionId == $session.sessionId
-//           )
-//then
-//    $session.getRisks().add("long_uninterrupted_work");
-//    $session.setRiskLevel(5);
-//    update($session);
-//end
-//
-//rule "Mark work with scrolling activity"
-//when
-//    $session: Session(risks contains "long_uninterrupted_work", risks not contains "scrolling_activity")
-//     $event: ActivityEvent(
-//            activityType == ActivityType.ENTERTAINMENT,
-//            activityDuration > 60,
-//            sessionId == $session.sessionId
-//        )
-//then
-//    $session.getRisks().add("scrolling_activity");
-//    $session.setRiskLevel(10);
-//    update($session);
-//end
-//
-//rule "Recommendation: scrolling activity"
-//when
-//    $session: Session(riskLevel == 10)
-//then
-//    insert(new Recommendation($session.getSessionId(),
-//        "Limit social networks, try a more active type of break",
-//        TirednessRisk.HIGH));
-//end
-//
-//rule "Recommendation: long uninterrupted work"
-//when
-//    $session: Session(riskLevel == 5)
-//then
-//    insert(new Recommendation($session.getSessionId(),
-//        "Take a short break (10 min)",
-//        TirednessRisk.MEDIUM));
-//end
-//
-//
-//
-//
+
+
