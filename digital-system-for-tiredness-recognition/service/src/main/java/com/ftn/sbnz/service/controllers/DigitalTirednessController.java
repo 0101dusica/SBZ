@@ -24,7 +24,7 @@ public class DigitalTirednessController {
     @PostMapping("/init-session")
     public void initSession(@RequestBody SessionDTO sessionDTO) {
         List<Session> allSessions = sessionDTO.getSessions();
-        tirednessService.addSessions(allSessions);
+        tirednessService.initSessions(allSessions);
     }
 
     // add new event in one session
@@ -39,7 +39,7 @@ public class DigitalTirednessController {
 //        return tirednessService.getRecommendationsForSession(sessionId);
     }
 
-    @GetMapping("/recommendations/{sessionId}")
+    @GetMapping("/session-recommendations/{sessionId}")
     public List<Recommendation> getRecommendations(@PathVariable long sessionId) {
         return tirednessService.getRecommendationsForSession(sessionId);
     }

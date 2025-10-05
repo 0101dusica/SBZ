@@ -11,24 +11,24 @@ import com.ftn.sbnz.model.models.enums.TirednessRisk;
 
 rule "Recommendation early fatigue"
 when
-    $session: Session()
-    $signal: EarlyFatigueSignal()
+    $session: Session($id: sessionId)
+    $signal: EarlyFatigueSignal(sessionId == $id)
 then
     insert(new Recommendation(
-        $session.sessionId,
-        "Take a 10-min break and stretch your eyes (20-20-20)",
+        $id,
+        "Take a 10-min break and stretch your eyes.",
         TirednessRisk.MEDIUM
     ));
 end
 
 rule "Recommendation mental fatigue"
 when
-    $session: Session()
-    $signal: MentalFatigueSignal()
+    $session: Session($id: sessionId)
+    $signal: MentalFatigueSignal(sessionId == $id)
 then
     insert(new Recommendation(
-        $session.sessionId,
-        "Limit social media for 30 min, take an active break",
+        $id,
+        "Limit social media for 30 min, take an active break.",
         TirednessRisk.HIGH
     ));
 end
