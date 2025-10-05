@@ -124,7 +124,7 @@ public class TirednessService {
 
         ScreenTimeEvent screenTimeEvent = new ScreenTimeEvent(
                 activityEvent.getStartTimestamp(),
-                activityEvent.getDeviceType() == DeviceType.COMPUTING_DEVICE ? "COMPUTER" : "PHONE",
+                activityEvent.getDeviceType() == DeviceType.COMPUTING_DEVICE ? DeviceType.COMPUTING_DEVICE : DeviceType.PHONE_DEVICE,
                 activityEvent.getActivityDuration()
         );
         cepKieSession.insert(screenTimeEvent);

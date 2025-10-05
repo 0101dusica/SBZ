@@ -44,10 +44,10 @@ public class DigitalTirednessController {
         return tirednessService.getRecommendationsForSession(sessionId);
     }
 
-    @GetMapping("/recommendations/{userId}")
+    @GetMapping("/recommendations/user/{userId}")
     public List<Recommendation> getRecommendationsForUser(@PathVariable long userId) {
-        return null;
-//        return tirednessService.getRecommendationsForSession(userId);
+        return java.util.Collections.emptyList();
+        // return tirednessService.getRecommendationsForSession(userId);
     }
 
     // to do: save sessions by user in one json
