@@ -12,9 +12,17 @@ public class Template {
     private Long userId;
     private String name;
     
-    // Osnovni pragovi (u minutima)
-    private int workBreakThreshold = 90;           // Upozorenje za rad bez pauze
-    private int entertainmentThreshold = 60;       // Prag za pasivno korišćenje
+    // WORK pragovi (u minutima)
+    private int workLowThreshold = 60;             // Početak LOW upozorenja za rad
+    private int workMediumThreshold = 90;          // Početak MEDIUM upozorenja za rad
+    private int workHighThreshold = 180;           // Početak HIGH upozorenja za rad
+    
+    // ENTERTAINMENT pragovi (u minutima) 
+    private int entertainmentLowThreshold = 90;    // Početak LOW upozorenja za zabavu
+    private int entertainmentMediumThreshold = 150; // Početak MEDIUM upozorenja za zabavu
+    private int entertainmentHighThreshold = 240;   // Početak HIGH upozorenja za zabavu
+    
+    // Dodatni pragovi
     private int focusDropThreshold = 25;           // Pad koncentracije (procenat)
     private int errorRateThreshold = 40;           // Povećanje grešaka (procenat)
     

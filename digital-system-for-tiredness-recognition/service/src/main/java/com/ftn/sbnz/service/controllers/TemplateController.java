@@ -31,6 +31,15 @@ public class TemplateController {
     @PostMapping("/user/{userId}")
     public ResponseEntity<Template> saveUserTemplate(@PathVariable Long userId, @RequestBody Template template) {
         Template savedTemplate = templateService.saveUserTemplate(userId, template);
+        
+        // After saving, regenerate the dynamic rules
+        try {
+            templateService.createDynamicKieSession(userId);
+            System.out.println("Dynamic rules regenerated after template update for user " + userId);
+        } catch (Exception e) {
+            System.err.println("Failed to regenerate dynamic rules after template update: " + e.getMessage());
+        }
+        
         return ResponseEntity.ok(savedTemplate);
     }
 
@@ -59,5 +68,32 @@ public class TemplateController {
     public ResponseEntity<Boolean> hasCustomTemplate(@PathVariable Long userId) {
         boolean hasCustom = templateService.hasCustomTemplate(userId);
         return ResponseEntity.ok(hasCustom);
+    }
+    
+    /**
+     * Generiše dinamička pravila za korisnika
+     */
+    @GetMapping("/user/{userId}/generate-rules")
+    public ResponseEntity<String> generateDynamicRules(@PathVariable Long userId) {
+        String drl = templateService.generateDynamicRules(userId);
+        return ResponseEntity.ok(drl);
+    }
+    
+    /**
+     * Testira kreiranje dinamičkog KieSession-a za korisnika
+     */
+    @PostMapping("/user/{userId}/test-dynamic-session")
+    public ResponseEntity<String> testDynamicSession(@PathVariable Long userId) {
+        try {
+            org.kie.api.runtime.KieSession session = templateService.createDynamicKieSession(userId);
+            if (session != null) {
+                session.dispose();
+                return ResponseEntity.ok("Dynamic KieSession created successfully for user " + userId);
+            } else {
+                return ResponseEntity.badRequest().body("Failed to create dynamic KieSession for user " + userId);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error creating dynamic session: " + e.getMessage());
+        }
     }
 }

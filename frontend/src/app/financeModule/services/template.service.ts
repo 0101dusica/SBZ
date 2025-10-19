@@ -7,11 +7,19 @@ export interface Template {
   userId: number;
   name: string;
   
-  // Osnovni pragovi (u minutima)
-  workBreakThreshold: number;
-  entertainmentThreshold: number;
-  focusDropThreshold: number;
-  errorRateThreshold: number;
+  // WORK pragovi (u minutima)
+  workLowThreshold: number;        // Početak LOW upozorenja za rad
+  workMediumThreshold: number;     // Početak MEDIUM upozorenja za rad
+  workHighThreshold: number;       // Početak HIGH upozorenja za rad
+  
+  // ENTERTAINMENT pragovi (u minutima)
+  entertainmentLowThreshold: number;    // Početak LOW upozorenja za zabavu
+  entertainmentMediumThreshold: number; // Početak MEDIUM upozorenja za zabavu
+  entertainmentHighThreshold: number;   // Početak HIGH upozorenja za zabavu
+  
+  // Dodatni pragovi
+  focusDropThreshold: number;      // Pad koncentracije (procenat)
+  errorRateThreshold: number;      // Povećanje grešaka (procenat)
   
   // CEP pragovi
   noBreakStreakMinutes: number;
@@ -19,9 +27,9 @@ export interface Template {
   passiveBingeMinutes: number;
   
   // Akcije po nivoima umora (1-3) - simplified
-  enableLowAction: boolean;      // Nivo 1: Blagi umor
-  enableMediumAction: boolean;   // Nivo 2: Umeren umor
-  enableHighAction: boolean;     // Nivo 3: Visok umor
+  enableLowAction: boolean;        // Nivo 1: Blagi umor
+  enableMediumAction: boolean;     // Nivo 2: Umeren umor
+  enableHighAction: boolean;       // Nivo 3: Visok umor
   
   // Integracija uređaja
   combineDevices: boolean;
@@ -53,5 +61,10 @@ export class TemplateService {
 
   hasCustomTemplate(userId: number): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/user/${userId}/has-custom`);
+  }
+
+  // Nova funkcionalnost - generisanje dinamičkih pravila
+  generateDynamicRules(userId: number): Observable<string> {
+    return this.http.get(`${this.baseUrl}/user/${userId}/generate-rules`, { responseType: 'text' });
   }
 }

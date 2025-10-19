@@ -31,7 +31,6 @@ public class TirednessService {
     private KieSession mainKieSession;
     private KieSession cepKieSession;
     private KieSession backwardKieSession;
-    private KieSession templateKieSession;
 
     public TirednessService(KieContainer kieContainer, TemplateService templateService) {
         this.kieContainer = kieContainer;
@@ -43,7 +42,6 @@ public class TirednessService {
         this.cepKieSession = kieContainer.newKieSession("cepKSession", config);
 
         this.backwardKieSession = kieContainer.newKieSession("backwardKSession");
-        this.templateKieSession = kieContainer.newKieSession("templateKSession");
     }
 
     public void initSessions(List<Session> sessions) {
@@ -89,18 +87,8 @@ public class TirednessService {
                     .collect(Collectors.toList());
             
             // Get template recommendations for this session
-            List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
-                    .stream()
-                    .map(obj -> (Recommendation)obj)
-                    .filter(rec -> rec.getSessionId() == session.getSessionId())
-                    .collect(Collectors.toList());
-            
-            // Remove non-allowed recommendations from both sessions
+            // Remove non-allowed recommendations from main session
             List<Recommendation> toRemoveFromMain = mainRecommendations.stream()
-                    .filter(rec -> !isRecommendationAllowedByTemplate(rec, userTemplate))
-                    .collect(Collectors.toList());
-                    
-            List<Recommendation> toRemoveFromTemplate = templateRecommendations.stream()
                     .filter(rec -> !isRecommendationAllowedByTemplate(rec, userTemplate))
                     .collect(Collectors.toList());
             
@@ -108,12 +96,9 @@ public class TirednessService {
             for (Recommendation rec : toRemoveFromMain) {
                 mainKieSession.delete(mainKieSession.getFactHandle(rec));
             }
-            for (Recommendation rec : toRemoveFromTemplate) {
-                templateKieSession.delete(templateKieSession.getFactHandle(rec));
-            }
             
             System.out.println("Session " + session.getSessionId() + ": Removed " + 
-                             (toRemoveFromMain.size() + toRemoveFromTemplate.size()) + 
+                             toRemoveFromMain.size() + 
                              " recommendations based on template settings");
         }
         
@@ -178,13 +163,7 @@ public class TirednessService {
         .filter(rec -> rec.getSessionId() == event.sessionId)
         .collect(Collectors.toList());
                 
-    List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
-        .stream()
-        .map(obj -> (Recommendation)obj)
-        .filter(rec -> rec.getSessionId() == event.sessionId)
-        .collect(Collectors.toList());
-        
-    mainRecommendations.addAll(templateRecommendations);
+    // Template recommendations are now handled in processTemplateRules and added to mainKieSession
         
     // Filter recommendations based on template settings
     Template userTemplate = templateService.getUserTemplate(session.getUserId());
@@ -200,16 +179,43 @@ public class TirednessService {
     }
     
     private void processTemplateRules(Session session, ActivityEvent event) {
-        Template userTemplate = templateService.getUserTemplate(session.getUserId());
-        
-        templateKieSession.insert(userTemplate);
-        templateKieSession.insert(session);
-        templateKieSession.insert(event);
-        
-        templateKieSession.fireAllRules();
-        
-        System.out.println("Template rules processed for user: " + session.getUserId() + 
-                          " with template: " + userTemplate.getName());
+        try {
+            // Create dynamic KieSession with user-specific template rules
+            KieSession dynamicTemplateSession = templateService.createDynamicKieSession(session.getUserId());
+
+            if (dynamicTemplateSession != null) {
+                System.out.println("[DEBUG] Ubacujem session: " + session.getSessionId());
+                System.out.println("[DEBUG] Ubacujem event: " + event);
+                System.out.println("[EVENT DEBUG] activityType=" + event.getActivityType() + ", duration=" + event.getActivityDuration());
+                dynamicTemplateSession.insert(session);
+                dynamicTemplateSession.insert(event);
+
+                System.out.println("[DEBUG] Objekti u dynamicTemplateSession pre fireAllRules:");
+                for (Object obj : dynamicTemplateSession.getObjects()) {
+                    System.out.println("  - " + obj);
+                }
+
+                dynamicTemplateSession.fireAllRules();
+
+                System.out.println("[DEBUG] Objekti u dynamicTemplateSession posle fireAllRules:");
+                for (Object obj : dynamicTemplateSession.getObjects()) {
+                    System.out.println("  - " + obj);
+                }
+
+                // Copy recommendations from dynamic session to main session
+                dynamicTemplateSession.getObjects(obj -> obj instanceof Recommendation)
+                    .forEach(mainKieSession::insert);
+
+                dynamicTemplateSession.dispose();
+
+                System.out.println("Dynamic template rules processed for user: " + session.getUserId());
+            } else {
+                System.err.println("Failed to create dynamic template session for user: " + session.getUserId());
+            }
+        } catch (Exception e) {
+            System.err.println("Error processing template rules for user " + session.getUserId() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 
@@ -265,13 +271,7 @@ public class TirednessService {
                 .filter(rec -> rec.getSessionId() == sessionId)
                 .collect(Collectors.toList());
                 
-        List<Recommendation> templateRecommendations = templateKieSession.getObjects(obj -> obj instanceof Recommendation)
-                .stream()
-                .map(obj -> (Recommendation) obj)
-                .filter(rec -> rec.getSessionId() == sessionId)
-                .collect(Collectors.toList());
-        
-        mainRecommendations.addAll(templateRecommendations);
+        // Template recommendations are now in mainKieSession after processTemplateRules
         
         // Filter recommendations based on template settings
         Session session = getSessionById(sessionId);
@@ -320,9 +320,6 @@ public class TirednessService {
         if (backwardKieSession != null) {
             backwardKieSession.dispose();
         }
-        if (templateKieSession != null) {
-            templateKieSession.dispose();
-        }
         
         // Kreiraj nove čiste session-e
         this.mainKieSession = kieContainer.newKieSession("mainKSession");
@@ -332,7 +329,6 @@ public class TirednessService {
         this.cepKieSession = kieContainer.newKieSession("cepKSession", config);
         
         this.backwardKieSession = kieContainer.newKieSession("backwardKSession");
-        this.templateKieSession = kieContainer.newKieSession("templateKSession");
         
         System.out.println("All KieSession instances reset successfully.");
     }

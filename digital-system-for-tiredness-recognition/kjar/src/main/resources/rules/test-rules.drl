@@ -1,0 +1,17 @@
+package rules;
+
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+
+rule "Test WORK"
+when
+    $event: com.ftn.sbnz.model.events.ActivityEvent(
+        activityType == com.ftn.sbnz.model.models.enums.ActivityType.WORK,
+        activityDuration >= 0,
+        activityDuration <= 90
+    )
+then
+    System.out.println("STATIC RULE FIRED: " + $event.getActivityType() + ", " + $event.getActivityDuration());
+end

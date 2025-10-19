@@ -8,8 +8,6 @@
     <kbase name="cepKbase" eventProcessingMode="stream" packages="rules.cep">
         <ksession name="cepKSession" clockType="pseudo"/>
     </kbase>
-    <kbase name="templateKBase" packages="rules.template">
-        <ksession name="templateKSession"/>
-    </kbase>
+
 
 </kmodule>

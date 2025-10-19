@@ -8,7 +8,7 @@ import { ButtonComponent } from '../../sharedModule/button/button.component';
 import { InputFieldComponent } from '../../sharedModule/input-field/input-field.component';
 import { TirednessService, Session, SessionDTO, ActivityEvent, Recommendation, CreateActivityEventRequest } from '../services/tiredness.service';
 import { Chart, ChartConfiguration } from 'chart.js/auto';
-import { TemplateSettingsComponent } from '../components/template-settings/template-settings.component';
+import { SimpleTemplateSettingsComponent } from '../components/simple-template-settings/simple-template-settings.component';
 import { TemplateService, Template } from '../services/template.service';
 
 interface TimeData {
@@ -30,7 +30,7 @@ interface ActivityForm {
 @Component({
   selector: 'app-tiredness-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, ButtonComponent, InputFieldComponent, TemplateSettingsComponent],
+  imports: [CommonModule, RouterModule, FormsModule, ButtonComponent, InputFieldComponent, SimpleTemplateSettingsComponent],
   template: `
     <div class="tiredness-dashboard">
       <!-- Header with Logo -->
@@ -316,12 +316,12 @@ interface ActivityForm {
     </div>
 
     <!-- Template Settings Modal -->
-    <app-template-settings 
+    <app-simple-template-settings 
       *ngIf="showTemplateSettings"
       [userId]="currentUserId"
       (close)="closeSettings()"
       (templateSaved)="onTemplateSaved($event)">
-    </app-template-settings>
+    </app-simple-template-settings>
   `,
   styles: [`
     .tiredness-dashboard {
@@ -1183,6 +1183,8 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
   onTemplateSaved(template: Template) {
     this.currentTemplate = template;
     console.log('Template updated:', template);
+    // Ugasi modal kada je template sačuvan
+    this.showTemplateSettings = false;
     // Ovde možemo dodati logiku za ponovno učitavanje pravila
     // ili notifikaciju korisniku da su postavke sačuvane
   }

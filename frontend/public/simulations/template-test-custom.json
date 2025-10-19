@@ -1,0 +1,39 @@
+{
+  "description": "Test sa CUSTOM template (stroži pragovi) - treba da pokrene CRVENO upozorenje",
+  "sessions": [
+    {
+      "sessionId": 20002,
+      "userId": 1,
+      "startTimestamp": 1759670000000,
+      "endTimestamp": 0,
+      "activityEvents": [
+        {
+          "id": 1,
+          "sessionId": 20002,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759670000000,
+          "endTimestamp": 1759673600000,
+          "activityDuration": 65,
+          "breakDuration": 0,
+          "typingSpeed": 250,
+          "errors": 5,
+          "comment": "65 minuta rada - preko custom praga od 60min"
+        },
+        {
+          "id": 2,
+          "sessionId": 20002,
+          "activityType": "WORK", 
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759673600000,
+          "endTimestamp": 1759675400000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 150,
+          "errors": 20,
+          "comment": "Dodatnih 30min sa padom brzine za 40% (250->150) i povećanjem grešaka"
+        }
+      ]
+    }
+  ]
+}

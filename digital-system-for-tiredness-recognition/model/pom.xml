@@ -17,6 +17,8 @@
 		<java.version>1.8</java.version>
 		<drools.version>7.49.0.Final</drools.version>
 		<spring-boot.repackage.skip>true</spring-boot.repackage.skip>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 	</properties>
 	<dependencies>
 		<dependency>

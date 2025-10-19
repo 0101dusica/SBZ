@@ -1,0 +1,26 @@
+{
+  "description": "Test sa DEFAULT template - treba da pokrene BLAGO (zeleno) upozorenje",
+  "sessions": [
+    {
+      "sessionId": 20001,
+      "userId": 1,
+      "startTimestamp": 1759670000000,
+      "endTimestamp": 0,
+      "activityEvents": [
+        {
+          "id": 1,
+          "sessionId": 20001,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759670000000,
+          "endTimestamp": 1759676400000,
+          "activityDuration": 95,
+          "breakDuration": 0,
+          "typingSpeed": 250,
+          "errors": 5,
+          "comment": "95 minuta rada - preko default praga od 90min, ali ne previše ekstremno"
+        }
+      ]
+    }
+  ]
+}
