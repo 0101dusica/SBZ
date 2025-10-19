@@ -103,12 +103,12 @@ export class TirednessService {
 
 
   // Submit tiredness level (new: POST /report-tiredness)
-  reportTirednessLevel(sessionId: number, level: number): Observable<any> {
+  reportTirednessLevel(sessionId: number, level: number): Observable<Recommendation> {
     const body: TirednessReportRequest = {
       sessionId,
       subjectiveTirednessLevel: level
     };
-    return this.http.post<any>(`${this.apiUrl}/report-tiredness`, body);
+    return this.http.post<Recommendation>(`${this.apiUrl}/report-tiredness`, body);
   }
 
   // End session

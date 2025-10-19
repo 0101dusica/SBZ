@@ -759,14 +759,11 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
   // Simulation properties
   simulationFiles = [
-    { label: 'Template test', value: 'template-test.json' },
     { label: 'Rani umor', value: 'early-fatigue.json' },
     { label: 'Mentalni umor', value: 'mental-fatigue.json' },
     { label: 'Mešovito', value: 'mix.json' },
     { label: 'Visok rizik', value: 'high-risk.json' },
-    { label: 'Uzrok: Multitasking', value: 'multitasking-cause.json' },
-    { label: 'Uzrok: Pasivno korišćenje', value: 'passive-use-cause.json' },
-    { label: 'Uzrok: Opterećenje poslom', value: 'workload-cause.json' }
+    { label: 'Backward', value: 'backward.json' },
   ];
   selectedSimulation: string | null = null;
 
@@ -905,10 +902,26 @@ export class TirednessDashboardComponent implements OnInit, AfterViewInit, OnDes
 
     this.isSubmittingLevel = true;
     this.tirednessService.reportTirednessLevel(this.currentSessionId, this.selectedTirednessLevel).subscribe({
-      next: () => {
+      next: (recommendation) => {
         this.isSubmittingLevel = false;
         this.selectedTirednessLevel = null;
-        // Show success message if needed
+        
+        console.log('Received backward chaining recommendation:', recommendation);
+        
+        // Add the recommendation to the recommendations list if it's not null
+        if (recommendation && recommendation.message) {
+          // Check if the recommendation is already in the list to avoid duplicates
+          const isDuplicate = this.recommendations.some(
+            rec => rec.message === recommendation.message && rec.sessionId === recommendation.sessionId
+          );
+          
+          if (!isDuplicate) {
+            this.recommendations = [...this.recommendations, recommendation];
+            console.log('Added backward chaining recommendation to list. New list:', this.recommendations);
+          } else {
+            console.log('Recommendation already exists in the list, not adding duplicate');
+          }
+        }
       },
       error: (err) => {
         console.error('Error submitting tiredness level:', err);

@@ -1,0 +1,36 @@
+{
+  "sessions": [
+    {
+      "sessionId": 567251,
+      "userId": 100,
+      "startTimestamp": 1759650000000,
+      "endTimestamp": 1759653600000,
+      "activityEvents": [
+        {
+          "id": 1,
+          "sessionId": 567251,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650000000,
+          "endTimestamp": 1759650300000,
+          "activityDuration": 100,
+          "breakDuration": 0,
+          "typingSpeed": 220,
+          "errors": 10
+        },
+        {
+          "id": 2,
+          "sessionId": 567251,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650900000,
+          "endTimestamp": 1759651200000,
+          "activityDuration": 130,
+          "breakDuration": 0,
+          "typingSpeed": 210,
+          "errors": 12
+        }
+      ]
+    }
+  ]
+}

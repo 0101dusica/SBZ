@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface Template {
+workBreakThreshold: any;
   id: number;
   userId: number;
   name: string;

@@ -170,34 +170,107 @@ Takva struktura pravila omogućava višeslojno rezonovanje i detaljniju personal
 
 # Backward chaining:
 
-Backward chaining u sistemu za prepoznavanje digitalnog zamora koristi se kada korisnik eksplicitno prijavi problem
-(npr. osećaj umora), a sistem potom unazad ispituje uzroke i donosi zaključke. Proces počinje od hipoteze i proverava se
-niz pravila dok se ne potvrdi glavni uzrok.
-**Scenario: prijava umora:**
+Backward chaining u sistemu za prepoznavanje digitalnog zamora predstavlja ključni mehanizam za dijagnostičko rezonovanje - umesto da se iz ulaznih činjenica izvode zaključci (kao kod forward chaininga), sistem kreće od ciljne hipoteze i traži dokaze koji je potvrđuju ili opovrgavaju. Drools engine omogućava implementaciju ovog obrasca kroz upite (queries) koji se mogu rekurzivno pozivati, formirajući stablo zaključivanja.
 
-1. **Početna hipoteza**
-    ● Korisnik prijavljuje subjektivni osećaj umora, ocena = 4/5.
-    ● Sistem formira tri hipoteze:
-       ○ H1: radno opterećenje,
-       ○ H2: pasivno korišćenje društvenih mreža,
-       ○ H3: multitasking.
-2. **Provera uslova – istorija aktivnosti (6h)**
-    ● Sistem koristi istoriju aktivnosti u poslednjih 6 sati i proverava sledeća pravila:
-       ○ Ako je vreme neprekidnog rada > 3h i nijedna pauza nije bila duža od 15 minuta → potvrđuje se
-          radno opterećenje.
-       ○ Ako je više od 1.5h utrošeno na društvene mreže ili video sadržaje → potvrđuje se pasivno korišćenje.
-       ○ Ako je broj promena aplikacija > 30 u periodu od 2h → potvrđuje se multitasking.
-3. **Odabir glavnog uzroka**
-    ● Ako je potvrđeno više uzroka, sistem vrši ponderisanje:
-       ○ Radno opterećenje: 50%
-       ○ pasivno korišćenje: 30%
-       ○ multitasking: 20%
-    ● Uzrok sa najvećim ponderom proglašava se glavnim.
-4. **Zaključak i preporuka**
-    ● Ako je uzrok radno opterećenje → preporuka: „uzmi dužu pauzu od 20 minuta i izađi u šetnju“.
-    ● Ako je uzrok pasivno korišćenje → preporuka: „smanji vreme na društvenim mrežama, probaj aktivniji
-       odmor“.
-    ● Ako je uzrok multitasking → preporuka: „zatvori nepotrebne aplikacije i fokusiraj se na jedan zadatak“.
+## Princip rada backward chaininga
+
+U kontekstu digitalnog zamora, backward chaining se aktivira kada:
+- Korisnik prijavi visok nivo subjektivnog zamora
+- Sistem detektuje potencijalnu kritičnu situaciju i želi da precizno utvrdi uzrok
+- Potrebna je detaljna analiza uzroka pre davanja preporuke
+
+Proces backward chaininga odvija se kroz sledeće korake:
+
+1. **Definisanje hipoteza i ciljeva**
+   - Sistem definiše glavne hipoteze o uzrocima zamora koje treba istražiti
+   - Svaka hipoteza se razlaže na podređene hipoteze (stablo zaključivanja)
+
+2. **Kreiranje upita (queries)**
+   - Za svaku hipotezu definiše se upit koji traži relevantne dokaze
+   - Upiti mogu pozivati druge upite, stvarajući rekurzivnu strukturu
+
+3. **Evaluacija dokaza**
+   - Upiti pretražuju bazu činjenica (aktivnosti korisnika, obrasce ponašanja)
+   - Sistem traži specifične obrasce koji potvrđuju određene hipoteze
+
+4. **Prikupljanje i ponderisanje rezultata**
+   - Za svaku hipotezu prikupljaju se dokazi i njihova težina
+   - Formira se zaključak sa stepenom pouzdanosti
+
+## Implementacija u Drools sistemu
+
+Drools pruža nativnu podršku za backward chaining kroz svoj query mehanizam koji omogućava:
+
+```drools
+query isUzrokZamora(String tip, Long sessionId)
+    // Rekurzivno pozivanje drugih upita koji proveravaju specifične dokaze
+    isRadnoOpterecenje(sessionId;) and tip == "radnoOpterecenje"
+    or
+    isPasivnoKoriscenje(sessionId;) and tip == "pasivnoKoriscenje"
+    or
+    isMultitasking(sessionId;) and tip == "multitasking"
+end
+
+// Podupit koji proverava dokaze za radno opterećenje
+query isRadnoOpterecenje(Long sessionId)
+    // Podupiti koji proveravaju specifične dokaze
+    isDugotrajniRad(sessionId;)
+    or
+    isCestiRadBezPauze(sessionId;)
+end
+
+// Specifičan upit koji proverava konkretan obrazac - dugotrajni rad
+query isDugotrajniRad(Long sessionId)
+    $aktivnost: ActivityEvent(
+        sessionId == sessionId,
+        activityType == ActivityType.WORK,
+        activityDuration > 90
+    )
+end
+```
+
+## Scenario: Dijagnostika uzroka zamora
+
+**1. Aktivacija backward chaininga**
+   - Korisnik unosi subjektivnu ocenu zamora 4/5
+   - Sistem inicira dijagnostički proces kroz upite
+
+**2. Stablo hipoteza**
+   - **H1: Radno opterećenje** - glavni uzrok je prekomerni rad
+     - H1.1: Dugotrajne sesije rada (>90 min)
+     - H1.2: Mnogo kratkih sesija bez adekvatnih pauza
+     - H1.3: Visok intenzitet rada (brzina kucanja, interakcije)
+
+   - **H2: Pasivno korišćenje** - glavni uzrok je pasivna konzumacija sadržaja
+     - H2.1: Dugotrajno korišćenje zabavnih sadržaja (>120 min)
+     - H2.2: Prelazak sa rada na zabavu bez pauze
+     - H2.3: Kontinuirano skrolovanje
+
+   - **H3: Multitasking** - glavni uzrok je prekomeran multitasking
+     - H3.1: Česte promene aplikacija (>30 u 2h)
+     - H3.2: Paralelno korišćenje više uređaja
+     - H3.3: Prekidanja fokusiranog rada
+
+**3. Prikupljanje dokaza**
+   - Sistem kroz upite pretražuje istoriju aktivnosti korisnika
+   - Za svaku podhipotezu prikuplja se skup dokaza i njihova snaga
+   - Primer: Za H1.1 se proverava broj sesija dužih od 90 minuta
+
+**4. Ponderisanje i zaključivanje**
+   - Sistem dodeljuje težinske faktore dokazima po hipotezama:
+     - Radno opterećenje: direktni dokazi (70%), indirektni dokazi (30%)
+     - Pasivno korišćenje: dugotrajnost (60%), kontekst (40%)
+     - Multitasking: broj promena (50%), vremenski razmak (50%)
+
+   - Na osnovu ponderisanih dokaza formira se konačna dijagnoza
+   - Ako je više hipoteza podržano, bira se dominantna (sa najvećim skorom)
+
+**5. Preporuka na osnovu dijagnoze**
+   - **Radno opterećenje**: "Napravite dužu pauzu (20-30 min). Izađite u šetnju i vežbajte oči (20-20-20 pravilo)."
+   - **Pasivno korišćenje**: "Ograničite vreme na pasivnim sadržajima. Aktivniji vid odmora pomoći će vam da se regenerišete."
+   - **Multitasking**: "Fokusirajte se na jedan zadatak. Isključite notifikacije i zatvorite nepotrebne aplikacije."
+
+Ovakav pristup backward chaininga omogućava sistemu da precizno identifikuje uzroke zamora kroz strukturirano rezonovanje, što rezultira personalizovanim i kontekstualno relevantnim preporukama za korisnika.
 
 
 # CEP (Kompleksna obrada događaja)

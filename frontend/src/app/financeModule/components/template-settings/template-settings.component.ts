@@ -35,8 +35,8 @@ import { ButtonComponent } from '../../../sharedModule/button/button.component';
               <label>Prag za zabavu/društvene mreže:</label>
               <div class="slider-container">
                 <input type="range" min="15" max="120" step="5"
-                       [(ngModel)]="template.entertainmentThreshold">
-                <span class="value">{{ template.entertainmentThreshold }} min</span>
+                       [(ngModel)]="template.entertainmentLowThreshold">
+                <span class="value">{{ template.entertainmentLowThreshold }} min</span>
               </div>
               <p class="description">Maksimalno vreme pasivnog korišćenja</p>
             </div>

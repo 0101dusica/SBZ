@@ -289,16 +289,30 @@ public class TirednessService {
     }
 
     public Recommendation backwardChaining(TirednessReportDTO report) {
+        // Get the session with activities
+        Session session = getSessionById(report.getSessionId());
+        if (session == null) {
+            System.out.println("[BACKWARD] Session not found for report: " + report.getSessionId());
+            return null;
+        }
+        
+        // Insert the report
         backwardKieSession.insert(report);
+        
+        // Insert all activities from the session
+        for (ActivityEvent event : session.getActivityEvents()) {
+            System.out.println("[BACKWARD] Inserting activity: " + event.getActivityType() + ", duration: " + event.getActivityDuration());
+            backwardKieSession.insert(event);
+        }
+        
+        // Run the rules
         backwardKieSession.fireAllRules();
 
-        backwardKieSession.fireAllRules();
-
+        // Get recommendations sorted by risk level (highest risk first)
         List<Recommendation> recommendations = backwardKieSession.getObjects(obj -> obj instanceof Recommendation)
                 .stream()
                 .map(obj -> (Recommendation) obj)
-                .sorted(Comparator.comparingInt(r -> r.getRiskLevel().ordinal()))
-                .map(obj -> (Recommendation)obj)
+                .sorted(Comparator.comparingInt(r -> -r.getRiskLevel().ordinal())) // Note the negative sign to sort descending
                 .collect(Collectors.toList());
 
         return recommendations.isEmpty() ? null : recommendations.get(0);
