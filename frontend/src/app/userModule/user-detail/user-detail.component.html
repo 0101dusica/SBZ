@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div class="background">
+      <div class="login-container">
+        <div class="logo-circle">
+          <img src="logo/logo-img.png" alt="DigitalCare Logo" class="logo" />
+        </div>
+        <form class="login-form" #form="ngForm" (ngSubmit)="onSaveChanges()">
+            <h2 class="main-title">Your Account</h2>
+            <h3 class="subtitle">View and Update Your Details</h3>
+          
+            <app-input-field [(value)]="email" name="email" placeholder="Email" type="email" [readOnly]="true"></app-input-field>
+          
+            <div class="two-inputs-container">
+              <app-input-field [(value)]="firstName" name="firstName" placeholder="First Name" type="text"></app-input-field>
+              <span style="margin-right: 5%;"></span>
+              <app-input-field [(value)]="lastName" name="lastName" placeholder="Last Name" type="text"></app-input-field>
+            </div>
+          
+            <app-input-field [(value)]="phoneNumber" name="phoneNumber" placeholder="Phone Number" type="tel"></app-input-field>
+          
+            <input type="date" [(ngModel)]="dateOfBirth" name="dateOfBirth" class="form-control-like" />
+          
+            <select class="custom-select" [(ngModel)]="gender" name="gender" required>
+              <option [ngValue]="0">Male</option>
+              <option [ngValue]="1">Female</option>
+            </select>
+          
+            <app-button label="Save Changes" variant="primary" [loading]="loading"></app-button>
+            <app-button label="Cancel" variant="outline" [routerLink]="['/workouts']"></app-button>
+          </form>
+      </div>
+    </div>
+  </body>
+</html>

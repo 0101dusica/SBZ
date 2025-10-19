@@ -1,0 +1,32 @@
+template header
+activityType
+minDuration
+maxDuration
+riskLevel
+recommendationMessage
+enabled
+
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+
+template "dynamic-tiredness-rules"
+
+rule "Tiredness_@{activityType}_@{row.rowNumber}"
+when
+    $event: com.ftn.sbnz.model.events.ActivityEvent(
+        activityType == com.ftn.sbnz.model.models.enums.ActivityType.@{activityType},
+        activityDuration >= @{minDuration},
+        activityDuration <= @{maxDuration}
+    )
+    eval(@{enabled})
+then
+    insert(new Recommendation(
+        $event.getSessionId(),
+        "@{recommendationMessage}",
+        TirednessRisk.@{riskLevel}
+    ));
+end
+
+end template

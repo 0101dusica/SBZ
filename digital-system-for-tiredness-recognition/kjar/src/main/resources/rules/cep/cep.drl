@@ -1,0 +1,262 @@
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Comparator;
+
+
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.events.KeyStrokeEvent;
+import com.ftn.sbnz.model.events.AppFocusEvent;
+import com.ftn.sbnz.model.events.UserActiveEvent;
+import com.ftn.sbnz.model.events.ScreenTimeEvent;
+import com.ftn.sbnz.model.events.FocusDropEvent;
+import com.ftn.sbnz.model.events.PassiveBingeEvent;
+import com.ftn.sbnz.model.events.NoBreakStreakEvent;
+import com.ftn.sbnz.model.events.MultiTaskOverloadEvent;
+import com.ftn.sbnz.model.events.EarlyFatigueSignal;
+import com.ftn.sbnz.model.events.MentalFatigueSignal;
+import com.ftn.sbnz.model.events.HighRiskTodaySignal;
+
+declare ActivityEvent
+    extends ActivityEvent
+    @role(event)
+    @timestamp(startTimestamp)
+end
+
+declare KeyStrokeEvent
+    extends KeyStrokeEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare AppFocusEvent
+    extends AppFocusEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare UserActiveEvent
+    extends UserActiveEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare ScreenTimeEvent
+    extends ScreenTimeEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare FocusDropEvent
+    extends FocusDropEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare PassiveBingeEvent
+    extends PassiveBingeEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare NoBreakStreakEvent
+    extends NoBreakStreakEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare MultiTaskOverloadEvent
+    extends MultiTaskOverloadEvent
+    @role(event)
+    @timestamp(ts)
+end
+
+declare EarlyFatigueSignal
+    extends EarlyFatigueSignal
+    @role(event)
+    @timestamp(ts)
+end
+
+declare MentalFatigueSignal
+    extends MentalFatigueSignal
+    @role(event)
+    @timestamp(ts)
+end
+
+declare HighRiskTodaySignal
+    extends HighRiskTodaySignal
+    @role(event)
+    @timestamp(ts)
+end
+
+
+rule "Detect typing drop"
+when
+    // 60-min baseline
+   $baseline: Double() from accumulate(
+       $e: KeyStrokeEvent() over window:time(60m),
+       average($e.charsPerMin)
+   )
+   $baselineError: Double() from accumulate(
+       $e: KeyStrokeEvent() over window:time(60m),
+       average($e.errorRate)
+   )
+
+   $latestEvent: KeyStrokeEvent() over window:time(15m)
+
+   $windowAvg: Double() from accumulate(
+       $e: KeyStrokeEvent() over window:time(15m),
+       average($e.charsPerMin)
+   )
+   $windowError: Double() from accumulate(
+       $e: KeyStrokeEvent() over window:time(15m),
+       average($e.errorRate)
+   )
+
+
+    eval($windowAvg <= 0.75 * $baseline && $windowError >= 1.4 * $baselineError)
+then
+    System.out.println("FocusDropEvent triggered! baseline=" + $baseline + ", windowAvg=" + $windowAvg);
+    insert(new FocusDropEvent($latestEvent.getSessionId(), $latestEvent.getTs()));
+end
+
+rule "Detect passive binge"
+when
+    $latest: AppFocusEvent() from accumulate(
+        $e: AppFocusEvent(category == "SOCIAL") over window:time(10m),
+        init( AppFocusEvent latest = null; ),
+        action( latest = $e; ),
+        result( latest )
+    )
+    $count: Number() from accumulate(
+        $e: AppFocusEvent(category == "SOCIAL") over window:time(10m),
+        count($e)
+    )
+    eval($count.intValue() >= 3)
+then
+    System.out.println("PassiveBingeEvent triggered! SessionId=" + $latest.getSessionId() + ", LastTs=" + $latest.getTs());
+    insert(new PassiveBingeEvent($latest.getSessionId(), $latest.getTs()));
+end
+
+
+
+rule "Detect no-break streak"
+when
+    $lastEvent: UserActiveEvent(breakDuration < 5) over window:time(90m)
+
+    $lastTs: Long() from accumulate(
+        $e: UserActiveEvent(breakDuration < 5) over window:time(90m),
+        init( Long ts = 0L; ),
+        action( ts = $e.getTs(); ),
+        result( ts )
+    )
+
+    $sumActive: Number() from accumulate(
+        $e: UserActiveEvent(breakDuration < 5) over window:time(90m),
+        sum($e.activityDuration)
+    )
+    eval($sumActive.doubleValue() >= 90)
+
+    not( NoBreakStreakEvent(sessionId == $lastEvent.sessionId,
+                                 ts >= ($lastTs - 5*60*1000),
+                                 ts <= ($lastTs + 5*60*1000)) )
+then
+    System.out.println("NoBreakStreakEvent triggered! " +
+                       "SessionId=" + $lastEvent.getSessionId() +
+                       ", LastEventTimestamp=" + $lastTs +
+                       ", TotalActiveMinutes=" + $sumActive);
+    insert(new NoBreakStreakEvent($lastEvent.getSessionId(), $lastTs));
+end
+
+
+rule "Detect multitask overload"
+when
+    $lastTs: Long() from accumulate(
+        $e: AppFocusEvent() over window:time(2h),
+        init( Long ts = 0L; ),
+        action( ts = $e.ts; ),
+        result( ts )
+    )
+    $count: Number() from accumulate(
+        $e: AppFocusEvent() over window:time(2h),
+        count($e)
+    )
+    eval($count.intValue() >= 30)
+then
+    System.out.println("MultiTaskOverloadEvent triggered! " +
+                           "TotalEventsIn2h=" + $count +
+                           ", LastEventTimestamp=" + $lastTs);
+    insert(new MultiTaskOverloadEvent($lastTs));
+end
+
+
+rule "Early fatigue"
+when
+    $focus: FocusDropEvent()
+    $nobreak: NoBreakStreakEvent()
+    eval(Math.abs($nobreak.ts - $focus.ts) <= 30*60*1000)
+then
+    System.out.println("EarlyFatigueSignal triggered! " +
+                           "SessionId=" + $focus.sessionId +
+                           ", Timestamp=" + Math.max($focus.ts, $nobreak.ts));
+    insert(new EarlyFatigueSignal($focus.sessionId, Math.max($focus.ts, $nobreak.ts)));
+end
+
+rule "Mental fatigue"
+when
+    $binge: PassiveBingeEvent()
+    $nobreak: NoBreakStreakEvent()
+    eval(Math.abs($binge.ts - $nobreak.ts) <= 45*60*1000)
+then
+    System.out.println("MentalFatigueSignal triggered! " +
+                           "SessionId=" + $nobreak.sessionId +
+                           ", Timestamp=" + Math.max($binge.ts, $nobreak.ts));
+    insert(new MentalFatigueSignal($nobreak.sessionId, Math.max($binge.ts, $nobreak.ts)));
+end
+
+rule "High risk today from early fatigue"
+when
+    $count: Number() from accumulate(
+        $e: EarlyFatigueSignal() over window:time(24h),
+        count($e)
+    )
+
+    $lastTs: Long() from accumulate(
+        $e: EarlyFatigueSignal() over window:time(24h),
+        max($e.ts)
+    )
+
+    $lastEvent: EarlyFatigueSignal(ts == $lastTs) over window:time(24h)
+
+    eval($count.intValue() >= 2)
+then
+    System.out.println("HighRiskToday triggered from EarlyFatigueSignal! SessionId="
+                       + $lastEvent.sessionId + ", ts=" + $lastEvent.ts
+                       + ", count=" + $count);
+
+    insert(new HighRiskTodaySignal($lastEvent.sessionId, $lastEvent.ts));
+end
+
+rule "High risk today from multitask/focus combo"
+when
+    $multiTs: Long() from accumulate(
+        $m: MultiTaskOverloadEvent() over window:time(24h),
+        max($m.ts)
+    )
+
+    $focusTs: Long() from accumulate(
+        $f: FocusDropEvent() over window:time(24h),
+        max($f.ts)
+    )
+
+    $lastFocus: FocusDropEvent(ts == $focusTs) over window:time(24h)
+then
+    System.out.println("HighRiskToday triggered from MultiTask+Focus combo! SessionId="
+                       + $lastFocus.getSessionId() + ", ts=" + Math.max($multiTs, $lastFocus.getTs()));
+    insert(new HighRiskTodaySignal($lastFocus.getSessionId(), Math.max($multiTs, $lastFocus.getTs())));
+end
+
+
+
+
+
+

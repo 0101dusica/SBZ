@@ -1,0 +1,126 @@
+package rules.backward;
+
+import com.ftn.sbnz.model.dto.TirednessReportDTO;
+import com.ftn.sbnz.model.events.ActivityEvent;
+import com.ftn.sbnz.model.models.enums.ActivityType;
+import com.ftn.sbnz.model.hypothesis.WorkloadHypothesis;
+import com.ftn.sbnz.model.hypothesis.PassiveUseHypothesis;
+import com.ftn.sbnz.model.hypothesis.MultitaskHypothesis;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+
+import java.util.List;
+import java.util.ArrayList;
+
+// Debug rule to print all activity events in the session
+rule "Debug Activity Events"
+    salience 100
+when
+    $event: ActivityEvent()
+then
+    System.out.println("[BACKWARD DEBUG] Found activity: type=" + $event.getActivityType() + 
+                      ", duration=" + $event.getActivityDuration() + 
+                      ", session=" + $event.getSessionId());
+end
+
+// Define the queries for backward chaining
+query isWorkingTooMuch(Long sessionId)
+    // Check for long working sessions (>60 min for testing)
+    exists (
+        ActivityEvent(
+            sessionId == sessionId,
+            activityType == ActivityType.WORK,
+            activityDuration > 60  // Reduced for testing
+        )
+    )
+end
+
+query isTooMuchPassiveUse(Long sessionId)
+    // Check for long passive use sessions (>90 min for testing)
+    exists (
+        ActivityEvent(
+            sessionId == sessionId,
+            activityType == ActivityType.ENTERTAINMENT,
+            activityDuration > 90  // Reduced for testing
+        )
+    )
+end
+
+query hasMultitasking(Long sessionId)
+    // At least two different types of activities
+    $work: ActivityEvent(
+        sessionId == sessionId,
+        activityType == ActivityType.WORK,
+        $id1: id
+    )
+    exists (
+        ActivityEvent(
+            sessionId == sessionId,
+            activityType != ActivityType.WORK,
+            id != $id1
+        )
+    )
+end
+
+// Main rules
+rule "Initialize Tiredness Investigation"
+    when
+        $report: TirednessReportDTO(subjectiveTirednessLevel >= 3)
+        not WorkloadHypothesis(sessionId == $report.sessionId)
+        not PassiveUseHypothesis(sessionId == $report.sessionId)
+        not MultitaskHypothesis(sessionId == $report.sessionId)
+    then
+        insert(new WorkloadHypothesis($report.getSessionId(), false));
+        insert(new PassiveUseHypothesis($report.getSessionId(), false));
+        insert(new MultitaskHypothesis($report.getSessionId(), false));
+        System.out.println("[BACKWARD] Started investigation for session " + $report.getSessionId());
+end
+
+// Check for workload as cause
+rule "Check Workload Cause"
+    when
+        $report: TirednessReportDTO($sid: sessionId, subjectiveTirednessLevel >= 3)
+        $wh: WorkloadHypothesis(sessionId == $sid, confirmed == false)
+        isWorkingTooMuch($sid;)
+    then
+        modify($wh) { setConfirmed(true) }
+        System.out.println("[BACKWARD] Workload confirmed as cause");
+        insert(new Recommendation($sid, "Preporučuje se duža pauza (20-30 min). Izađite u šetnju i odmorite oči.", TirednessRisk.HIGH));
+end
+
+// Check for passive use as cause
+rule "Check Passive Use Cause"
+    when
+        $report: TirednessReportDTO($sid: sessionId, subjectiveTirednessLevel >= 3)
+        $ph: PassiveUseHypothesis(sessionId == $sid, confirmed == false)
+        isTooMuchPassiveUse($sid;)
+    then
+        modify($ph) { setConfirmed(true) }
+        System.out.println("[BACKWARD] Passive use confirmed as cause");
+        insert(new Recommendation($sid, "Ograničite vreme na pasivnim sadržajima. Preporučuje se aktivniji vid odmora.", TirednessRisk.MEDIUM));
+end
+
+// Check for multitasking as cause
+rule "Check Multitasking Cause"
+    when
+        $report: TirednessReportDTO($sid: sessionId, subjectiveTirednessLevel >= 3)
+        $mh: MultitaskHypothesis(sessionId == $sid, confirmed == false)
+        hasMultitasking($sid;)
+    then
+        modify($mh) { setConfirmed(true) }
+        System.out.println("[BACKWARD] Multitasking confirmed as cause");
+        insert(new Recommendation($sid, "Fokusirajte se na jedan zadatak. Isključite notifikacije i zatvorite nepotrebne aplikacije.", TirednessRisk.MEDIUM));
+end
+
+// Default recommendation if no cause is confirmed
+rule "Default Recommendation"
+    when
+        $report: TirednessReportDTO($sid: sessionId, subjectiveTirednessLevel >= 3)
+        WorkloadHypothesis(sessionId == $sid, confirmed == false)
+        PassiveUseHypothesis(sessionId == $sid, confirmed == false)
+        MultitaskHypothesis(sessionId == $sid, confirmed == false)
+        not Recommendation(sessionId == $sid)
+    then
+        System.out.println("[BACKWARD] No specific cause identified, providing general recommendation");
+        insert(new Recommendation($sid, "Napravite kraću pauzu i odmorite se od ekrana.", TirednessRisk.LOW));
+end

@@ -1,0 +1,7 @@
+activityType,minDuration,maxDuration,riskLevel,recommendationMessage,enabled
+WORK,60,90,LOW,Radite duže vreme bez pauze. Preporučuje se kratka pauza.,true
+WORK,90,180,MEDIUM,Radite još duže bez prekida. Potrebna je duža pauza.,true  
+WORK,180,1440,HIGH,Radite predugo bez prekida. Obavezna je ozbiljna pauza!,true
+ENTERTAINMENT,120,240,LOW,Provodite dosta vremena na zabavi. Predlog: napravite aktivan odmor.,true
+ENTERTAINMENT,240,1440,MEDIUM,Pasivno koristite ekran duže vreme. Ograničite vreme zabave i izađite napolje.,true
+ENTERTAINMENT,180,1440,HIGH,Predugo gledate u ekran bez prekida. Obavezna je ozbiljna pauza!,true

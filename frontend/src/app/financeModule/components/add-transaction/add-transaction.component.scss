@@ -1,0 +1,390 @@
+::ng-deep .form-actions app-button > button {
+  width: 100% !important;
+  display: block;
+}
+.form-actions app-button > button {
+  width: 100% !important;
+  display: block;
+}
+
+.category-row-main-wrap {
+  width: 100%;
+  margin-bottom: 8px;
+  overflow-x: auto;
+}
+
+.category-row-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  width: max-content;
+  min-width: 320px;
+  max-width: none;
+}
+.category-row-main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  width: 100%;
+  min-width: 320px;
+  max-width: 650px;
+}
+
+
+.category-row-custom {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.category-row-top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.category-row-bottom {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0;
+}
+.custom-category-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  min-height: 48px;
+}
+
+.custom-button {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  align-self: flex-start;
+  margin-left: 0;
+}
+
+.custom-button.active {
+  background: rgba(255, 255, 255, 0.9);
+  color: #576d2c;
+  border-color: white;
+  font-weight: 600;
+}
+
+.custom-input-field-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  opacity: 1;
+  visibility: visible;
+  max-width: 400px;
+  transition: opacity 0.2s, max-width 0.2s, visibility 0.2s;
+}
+.add-transaction-card {
+  background: linear-gradient(135deg, #576d2c 0%, #b9b26c 100%);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(240, 147, 251, 0.2);
+}
+
+.transaction-type-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-button {
+  padding: 16px;
+  border: none;
+  background: transparent;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-button.active {
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.form-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-title {
+  color: white;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+
+.categories {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.category-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.category-dropdown-inline {
+  margin: 0;
+}
+
+.category-select-inline {
+  width: auto;
+  min-width: 180px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.category-select-inline:focus {
+  outline: none;
+  border-color: white;
+  background: white;
+}
+
+// Default Categories (3 common ones)
+.default-categories {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.category-tag {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  border: 2px solid transparent;
+  user-select: none;
+
+  &.default-tag {
+    background: rgba(255, 255, 255, 0.25);
+    font-weight: 500;
+  }
+}
+
+.category-tag:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.category-tag.selected {
+  background: rgba(255, 255, 255, 0.9);
+  color: #576d2c;
+  border-color: white;
+  font-weight: 600;
+}
+
+.category-tag input[type="radio"] {
+  display: none;
+}
+
+// Category Dropdown
+.category-dropdown {
+  margin: 8px 0;
+}
+
+.category-select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  color: #333;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: white;
+    background: white;
+  }
+
+  option {
+    background: white;
+    color: #333;
+    padding: 8px;
+  }
+}
+
+// Custom Category Section  
+.custom-category {
+  margin-top: 4px;
+}
+
+.custom-input {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.custom-button {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  align-self: flex-start;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  &.active {
+    background: rgba(255, 255, 255, 0.9);
+    color: #576d2c;
+    border-color: white;
+    font-weight: 600;
+  }
+
+  i {
+    margin-right: 6px;
+  }
+}
+
+.custom-input-field {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  animation: slideDown 0.3s ease;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.form-actions app-button {
+  width: 100% !important;
+  display: block;
+  justify-content: center;
+}
+.form-actions {
+  width: 100% !important;
+}
+
+// Override input field styles for this component
+::ng-deep .add-transaction-card {
+  .input-field {
+    .input-container input {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid transparent;
+      color: #333;
+      
+      &:focus {
+        border-color: white;
+        background: white;
+      }
+    }
+    
+    label {
+      color: white;
+      font-weight: 600;
+    }
+  }
+  
+  .button {
+    &.primary {
+      background: white;
+      color: #576d2c;
+      font-weight: 600;
+      
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-2px);
+      }
+    }
+    
+    &.outline {
+      background: transparent;
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      
+      &:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .form-content {
+    padding: 20px;
+  }
+  
+  .form-actions {
+    grid-template-columns: 1fr;
+  }
+  
+  .default-categories {
+    gap: 6px;
+  }
+
+  .category-tag {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .custom-input-field {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

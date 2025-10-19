@@ -1,0 +1,60 @@
+{
+  "sessions": [
+    {
+      "sessionId": 462628,
+      "userId": 100,
+      "startTimestamp": 1759650000000,
+      "endTimestamp": 1759653600000,
+      "activityEvents": [
+        {
+          "id": 1,
+          "sessionId": 462628,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650000000,
+          "endTimestamp": 1759650300000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 220,
+          "errors": 10
+        },
+        {
+          "id": 2,
+          "sessionId": 462628,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650900000,
+          "endTimestamp": 1759651200000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 210,
+          "errors": 12
+        },
+        {
+          "id": 3,
+          "sessionId": 462628,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759651800000,
+          "endTimestamp": 1759652100000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 150,
+          "errors": 20
+        },
+        {
+          "id": 4,
+          "sessionId": 462628,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759652700000,
+          "endTimestamp": 1759653000000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 100,
+          "errors": 25
+        }
+      ]
+    }
+  ]
+}

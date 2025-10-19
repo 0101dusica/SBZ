@@ -1,0 +1,58 @@
+package rules.main;
+dialect  "mvel"
+
+import com.ftn.sbnz.model.models.Session;
+import com.ftn.sbnz.model.models.Recommendation;
+import com.ftn.sbnz.model.models.enums.TirednessRisk;
+import com.ftn.sbnz.model.events.EarlyFatigueSignal;
+import com.ftn.sbnz.model.events.MentalFatigueSignal;
+import com.ftn.sbnz.model.events.HighRiskTodaySignal;
+
+
+rule "Recommendation early fatigue"
+when
+    $session: Session($id: sessionId)
+    $signal: EarlyFatigueSignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.LOW) )
+then
+    insert(new Recommendation(
+        $id,
+        "Napravite pauzu od 10 minuta i opustite oči.",
+        TirednessRisk.LOW
+    ));
+end
+
+rule "Recommendation mental fatigue"
+when
+    $session: Session($id: sessionId)
+    $signal: MentalFatigueSignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.MEDIUM) )
+then
+    insert(new Recommendation(
+        $id,
+        "Ograničite korišćenje društvenih mreža na 30 minuta i napravite aktivnu pauzu.",
+        TirednessRisk.MEDIUM
+    ));
+end
+
+rule "Recommendation high risk today"
+when
+    $session: Session($id: sessionId)
+    $signal: HighRiskTodaySignal(sessionId == $id)
+    not( Recommendation(sessionId == $id, riskLevel == TirednessRisk.HIGH) )
+then
+    insert(new Recommendation(
+        $id,
+        "Napravite pauzu od 20–30 minuta i pređite na drugu vrstu aktivnosti (šetnja ili lagana vežba).",
+        TirednessRisk.HIGH
+    ));
+end
+
+
+
+
+
+
+
+
+

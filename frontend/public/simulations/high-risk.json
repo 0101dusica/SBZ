@@ -1,0 +1,108 @@
+{
+  "sessions": [
+    {
+      "sessionId": 746272,
+      "userId": 100,
+      "startTimestamp": 1759650000000,
+      "endTimestamp": 1759660000000,
+      "activityEvents": [
+        {
+          "id": 1,
+          "sessionId": 746272,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650000000,
+          "endTimestamp": 1759650300000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 220,
+          "errors": 10
+        },
+        {
+          "id": 2,
+          "sessionId": 746272,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759650900000,
+          "endTimestamp": 1759651200000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 210,
+          "errors": 12
+        },
+        {
+          "id": 3,
+          "sessionId": 746272,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759651800000,
+          "endTimestamp": 1759652100000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 150,
+          "errors": 20
+        },
+        {
+          "id": 4,
+          "sessionId": 746272,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759652700000,
+          "endTimestamp": 1759653000000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 100,
+          "errors": 25
+        },
+        {
+          "id": 5,
+          "sessionId": 746272,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "PHONE_DEVICE",
+          "startTimestamp": 1759652720000,
+          "activityDuration": 5,
+          "breakDuration": 0,
+          "typingSpeed": 0,
+          "errors": 0,
+          "category": "SOCIAL"
+        },
+        {
+          "id": 6,
+          "sessionId": 746272,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "PHONE_DEVICE",
+          "startTimestamp": 1759652740000,
+          "activityDuration": 5,
+          "breakDuration": 0,
+          "typingSpeed": 0,
+          "errors": 0,
+          "category": "SOCIAL"
+        },
+        {
+          "id": 7,
+          "sessionId": 746272,
+          "activityType": "ENTERTAINMENT",
+          "deviceType": "PHONE_DEVICE",
+          "startTimestamp": 1759652760000,
+          "activityDuration": 5,
+          "breakDuration": 0,
+          "typingSpeed": 0,
+          "errors": 0,
+          "category": "SOCIAL"
+        },
+        {
+          "id": 8,
+          "sessionId": 746272,
+          "activityType": "WORK",
+          "deviceType": "COMPUTING_DEVICE",
+          "startTimestamp": 1759653100000,
+          "endTimestamp": 1759653400000,
+          "activityDuration": 30,
+          "breakDuration": 0,
+          "typingSpeed": 90,
+          "errors": 30
+        }
+      ]
+    }
+  ]
+}

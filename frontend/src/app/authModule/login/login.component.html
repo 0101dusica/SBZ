@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <div class="background">
+      <div class="login-container">
+        <div class="logo-circle">
+          <img src="logo/logo-img.png" alt="DigitalCare Logo" class="logo" />
+        </div>
+        <form class="login-form" #form="ngForm" (ngSubmit)="onLogin()">
+          <h2 class="main-title">Welcome Back to DigitalCare</h2>
+          <h3 class="subtitle">Log In to Your Account</h3>
+
+          <app-input-field [(value)]="email" name="email" placeholder="Email" type="email"></app-input-field>
+          <app-input-field [(value)]="password" name="password" placeholder="Password" type="password"></app-input-field>
+
+          <app-button label="Submit" variant="primary" [loading]="loading"></app-button>
+
+        </form>
+        <div class="signup">
+          <p>New to DigitalCare ? <a [routerLink]="['/register']">Register now</a></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
